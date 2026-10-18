@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Tycoon Control Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: awning stripe + masthead, a four-figure summary strip, a scrolling tab strip, then one panel at a time.
+   The owner sees the same panels with inline controls; everyone else gets the read-only version, live. */
+:root{
+  --bg:#eef1ec; --surface:#fbfcfa; --surface2:#e5eae3; --ink:#16201b; --muted:#56665c; --line:#d3dbd1; --link:#8da398;
+  --accent:#0b7a68; --accent-ink:#ffffff; --coin:#9a5a00;
+  --good:#1e8449; --warn:#a05f00; --bad:#b83a2a; --on-bad:#ffffff;
+  --c1:#0b7a68; --c2:#d99100; --c3:#2f6fb5; --c4:#c4456a; --c5:#7a55c2; --c6:#6f8a1f;
+  --f-display:'Bricolage Grotesque',system-ui,sans-serif;
+  --f-body:'Figtree',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1411; --surface:#161e19; --surface2:#1f2923; --ink:#e7eee9; --muted:#8fa196; --line:#27332c; --link:#4a5d52;
+    --accent:#3fd0b0; --accent-ink:#06231c; --coin:#f2b632;
+    --good:#4cc48a; --warn:#f2b632; --bad:#ef7b69; --on-bad:#2b0d08;
+    --c1:#3fd0b0; --c2:#f2b632; --c3:#6aa6ec; --c4:#ef7fa0; --c5:#a98af0; --c6:#a6c94a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1411; --surface:#161e19; --surface2:#1f2923; --ink:#e7eee9; --muted:#8fa196; --line:#27332c; --link:#4a5d52;
+  --accent:#3fd0b0; --accent-ink:#06231c; --coin:#f2b632;
+  --good:#4cc48a; --warn:#f2b632; --bad:#ef7b69; --on-bad:#2b0d08;
+  --c1:#3fd0b0; --c2:#f2b632; --c3:#6aa6ec; --c4:#ef7fa0; --c5:#a98af0; --c6:#a6c94a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink); font:15px/1.45 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 56px;
+}
+button,input,select{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.app{max-width:1080px;margin:0 auto}
+.awning{height:12px;background:repeating-linear-gradient(90deg,var(--accent) 0 20px,var(--surface2) 20px 40px);border-radius:0 0 10px 10px}
+.mast{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between;padding:20px 0 16px}
+.brand{min-width:0}
+h1{font:800 clamp(26px,5vw,38px)/1.05 var(--f-display);letter-spacing:-.02em;margin:0;text-wrap:balance;overflow-wrap:anywhere}
+.sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+.mastright{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.pill{display:inline-flex;gap:7px;align-items:center;font:500 12px var(--f-mono);padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
+.pill.warn .dot{background:var(--warn)}
+.pill.bad .dot{background:var(--bad)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;color:var(--muted);font:600 13px var(--f-body);padding:8px 13px;min-height:36px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.adminbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:10px 14px;margin-bottom:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.adminbar p{margin:0;flex:1 1 260px;color:var(--muted);font-size:13px;min-width:0}
+.adminbar p b{color:var(--ink)}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 18px}
+.summary>div{background:var(--surface);padding:12px 14px;min-width:0}
+.summary dt{font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.summary dd{margin:3px 0 0;font:600 20px var(--f-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:18px;scrollbar-width:thin}
+.tab{border:0;border-bottom:3px solid transparent;background:none;color:var(--muted);font:600 14px var(--f-body);padding:11px 14px;min-height:44px;white-space:nowrap;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.panel{min-width:0}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.bar h2{font:800 20px var(--f-display);margin:0;letter-spacing:-.01em}
+.bar .hint{color:var(--muted);font-size:13px;margin:2px 0 0}
+.stack{display:grid;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:12px}
+.btn{font:600 13px var(--f-body);padding:8px 13px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.armed{background:var(--bad);color:var(--on-bad);border-color:var(--bad)}
+.btn.ico{padding:6px 10px;min-width:36px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.who{display:flex;gap:12px;align-items:center;flex:1 1 200px;min-width:0}
+.whotxt{min-width:0}
+.whotxt h3{margin:0;font:600 16px var(--f-body);overflow-wrap:anywhere}
+.whotxt p{margin:0;color:var(--muted);font-size:12px}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font:800 15px var(--f-display);flex:none}
+.cell{display:flex;flex-direction:column;gap:3px;min-width:110px}
+.cell.grow{flex:2 1 220px;min-width:0}
+.lbl{font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.num{font:600 16px var(--f-mono);font-variant-numeric:tabular-nums}
+.coin{color:var(--coin)}
+.faint{color:var(--muted);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;gap:7px;align-items:baseline;padding:3px 10px;border-radius:99px;background:var(--surface2);font-size:12px}
+.chip b{font:600 12px var(--f-mono);font-variant-numeric:tabular-nums}
+.chip.off{opacity:.6}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px;align-content:start;min-width:0}
+.card h3{margin:0;font:600 17px var(--f-body);overflow-wrap:anywhere}
+.card .meta{margin:2px 0 0;color:var(--muted);font-size:12px}
+.card-top{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.metrics .full{grid-column:1/-1}
+.inwrap{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--bg);overflow:hidden;max-width:100%}
+.inwrap .pre{padding:0 0 0 9px;color:var(--coin);font:600 14px var(--f-mono)}
+.qin{width:100%;min-width:70px;max-width:130px;border:0;background:none;color:var(--ink);font:600 15px var(--f-mono);padding:7px 9px;min-height:34px}
+.qin:focus-visible{outline-offset:-2px}
+.track{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.track>i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.rate{display:flex;align-items:center;gap:10px}
+.rate .track{flex:1}
+.stackbar{display:flex;height:22px;border-radius:7px;overflow:hidden;background:var(--surface2);border:1px solid var(--line)}
+.stackbar>span{display:block;height:100%;min-width:2px}
+.stackbar>.free{background:repeating-linear-gradient(135deg,var(--surface2) 0 6px,var(--line) 6px 12px)}
+.big{font:800 clamp(34px,8vw,54px)/1 var(--f-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.flowhead{display:flex;flex-wrap:wrap;gap:12px 36px;align-items:flex-end;margin-bottom:14px}
+.flowhead .cell{min-width:0}
+.sw{width:12px;height:12px;border-radius:3px;flex:none}
+.crow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.crow .nm{display:flex;gap:10px;align-items:center;flex:1 1 180px;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.crow .sh{font:500 13px var(--f-mono);color:var(--muted);min-width:48px;text-align:right}
+.group{margin:18px 0 8px;font:600 12px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.item{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;align-content:start;min-width:0}
+.item.hidden{opacity:.6;border-style:dashed}
+.item h4{margin:0;font:600 15px var(--f-body);overflow-wrap:anywhere}
+.item .line{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:6px;background:var(--surface2);color:var(--muted)}
+.tag.bad{color:var(--bad)}
+.board ol{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.board li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:2px 10px;align-items:center}
+.board .rk{font:600 13px var(--f-mono);color:var(--muted);text-align:right}
+.board .nm{font-weight:600;overflow-wrap:anywhere;min-width:0}
+.board .vl{font:600 14px var(--f-mono);font-variant-numeric:tabular-nums}
+.board .track{grid-column:2/4;height:5px}
+.board li:first-child .rk{color:var(--coin)}
+.qcard .reward{font:600 13px var(--f-mono);color:var(--coin)}
+.pchip{border:1px solid var(--line);background:var(--bg);color:var(--muted);font:500 12px var(--f-body);padding:5px 11px;border-radius:99px;min-height:30px;cursor:pointer}
+.pchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.webwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:16px}
+.webwrap svg{display:block;min-width:600px;width:100%;height:auto}
+.web-l{stroke:var(--link);stroke-width:1.6}
+.web-n{fill:var(--accent);stroke:var(--surface);stroke-width:3}
+.web-t{fill:var(--ink);font:500 12px var(--f-body)}
+.linkrow{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.linkrow span{min-width:0;overflow-wrap:anywhere}
+.linkform{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.linkform select{flex:1 1 150px;min-width:0}
+select,.fld input,.search input{font:500 14px var(--f-body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-height:38px;width:100%}
+.search{flex:1 1 220px;max-width:340px}
+.empty{padding:30px 16px;border:1px dashed var(--line);border-radius:12px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
+.empty b{color:var(--ink);font:600 16px var(--f-body)}
+.empty p{margin:0;max-width:44ch}
+.subtabs{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.subtabs button{border:0;background:none;color:var(--muted);font:600 13px var(--f-body);padding:8px 14px;min-height:36px;cursor:pointer}
+.subtabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.scrim{position:fixed;inset:0;background:rgba(8,14,11,.58);display:grid;place-items:center;padding:16px;z-index:50}
+.sheet{width:min(100%,470px);max-height:92%;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:12px}
+.sheet h2{margin:0;font:800 20px var(--f-display)}
+.fld{display:grid;gap:5px;font:600 12px var(--f-body);color:var(--muted)}
+.fld.chk{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:14px}
+.fld.chk input{width:18px;height:18px;min-height:0;accent-color:var(--accent)}
+.statrow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:6px;margin-bottom:6px}
+.statrow input{font:500 14px var(--f-body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-height:38px;width:100%}
+.sheet-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.sp{flex:1}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font:600 13px var(--f-body);z-index:60;max-width:calc(100% - 32px)}
+.foot{margin-top:32px;text-align:center;color:var(--muted);font-size:12px}
+.foot button{background:none;border:0;color:var(--muted);font:500 12px var(--f-body);text-decoration:underline;cursor:pointer;padding:10px}
+.toast.bad{background:var(--bad);color:var(--on-bad)}
+@media (max-width:520px){
+  .metrics{grid-template-columns:1fr 1fr}
+  .cell{min-width:90px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .track>i,.stackbar>span{transition:width .35s ease}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="awning" aria-hidden="true"></div>
+  <header class="mast">
+    <div class="brand">
+      <h1 id="gname">Your game</h1>
+      <p class="sub">Live control room</p>
+    </div>
+    <div id="mastright" class="mastright"></div>
+  </header>
+  <div id="adminbar" class="adminbar" hidden></div>
+  <dl id="summary" class="summary"></dl>
+  <nav id="tabs" class="tabs" role="tablist" aria-label="Sections"></nav>
+  <main id="panel" class="panel" role="tabpanel"></main>
+  <footer id="foot" class="foot"></footer>
+</div>
+<div id="modal" class="scrim" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module">
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s);};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+var num=function(v,d){var n=Number(v);return isFinite(n)&&v!==null&&v!==''?n:(d||0);};
+var int=function(v){return Math.round(num(v)).toLocaleString();};
+var pad=function(n){return String(n).padStart(2,'0');};
+var today=function(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+
+var COLLS=['players','friends','stores','shops','boards','quests','meta'];
+var TABS=[['players','Players'],['network','Network'],['stores','Stores'],['customers','Customers'],['shops','Shops'],['leaderboard','Leaderboard'],['quests','Daily quests']];
+var S={players:[],friends:[],stores:[],shops:[],boards:[],quests:[],meta:{},tab:'players',shopTab:'furniture',q:'',owner:false,adminView:true,status:'connecting',saving:0,loaded:{},timeout:false,rolled:false,modal:null,dirty:false,noDb:false};
+var db=null;
+try{var t0=localStorage.getItem('tcr-tab');if(t0&&TABS.some(function(t){return t[0]===t0;}))S.tab=t0;}catch(e){}
+
+var cur=function(){return (S.meta.settings&&S.meta.settings.currency)||'$';};
+var money=function(v){return cur()+int(v);};
+var ed=function(){return S.owner&&S.adminView;};
+var byId=function(list,id){for(var i=0;i<list.length;i++){if(list[i].id===id)return list[i];}return null;};
+var ready=function(){return S.timeout||COLLS.every(function(c){return S.loaded[c];});};
+function getDoc(coll,id){var d=coll==='meta'?S.meta[id]:byId(S[coll],id);if(!d)return null;var c=Object.assign({},d);delete c.id;return c;}
+function friendCount(id){return S.friends.filter(function(f){return f.a===id||f.b===id;}).length;}
+function setHtml(el,h){if(el.__h!==h){el.innerHTML=h;el.__h=h;}}
+
+/* ---------- data ---------- */
+function listen(coll){
+  db.collection(coll).onSnapshot(function(snap){
+    var rows=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});});
+    if(coll==='meta'){var m={};rows.forEach(function(r){var id=r.id;var rest=Object.assign({},r);delete rest.id;m[id]=rest;});S.meta=m;}
+    else{S[coll]=rows;}
+    if(!snap.metadata.fromCache)S.loaded[coll]=true;
+    S.status='live';
+    maybeRoll();
+    schedule();
+  },function(err){S.status='error';S.err=err&&err.code;schedule();});
+}
+var chains=new Map();
+function enqueue(key,fn){var prev=chains.get(key)||Promise.resolve();var next=prev.catch(function(){}).then(fn);chains.set(key,next);return next;}
+function errMsg(e){
+  var c=e&&e.code;
+  if(c==='quota_exceeded'||c==='resource-exhausted')return 'Storage is full. Delete something you no longer need.';
+  if(c==='invalid_argument'||c==='permission-denied')return 'That change was refused. Sign in with the owner account to edit.';
+  return 'Could not save. Check your connection and try again.';
+}
+function busy(d,ok){S.saving+=d;paintStatus();}
+async function write(coll,id,data,opts){
+  var merge=!opts||opts.merge!==false;
+  busy(1);
+  try{
+    await enqueue(coll+'/'+id,async function(){
+      var ref=db.doc(coll+'/'+id);
+      if(merge){try{await ref.update(data);}catch(e){if(e&&(e.code==='invalid_argument'||e.code==='not-found')){await ref.set(data);}else{throw e;}}}
+      else{await ref.set(data);}
+    });
+    busy(-1,true);return true;
+  }catch(e){busy(-1);toast(errMsg(e),'bad');return false;}
+}
+async function removeDoc(coll,id){
+  busy(1);
+  try{await enqueue(coll+'/'+id,function(){return db.doc(coll+'/'+id).delete();});busy(-1,true);return true;}
+  catch(e){busy(-1);toast(errMsg(e),'bad');return false;}
+}
+async function afterDelete(coll,id){
+  var i;
+  if(coll==='players'){
+    var fl=S.friends.filter(function(f){return f.a===id||f.b===id;});
+    for(i=0;i<fl.length;i++)await removeDoc('friends',fl[i].id);
+    var ql=S.quests.filter(function(q){return (q.doneBy||[]).indexOf(id)>=0;});
+    for(i=0;i<ql.length;i++)await write('quests',ql[i].id,{doneBy:ql[i].doneBy.filter(function(x){return x!==id;})});
+    var sl=S.stores.filter(function(s){return s.ownerId===id;});
+    for(i=0;i<sl.length;i++)await write('stores',sl[i].id,{ownerId:''});
+  }
+  if(coll==='stores'){
+    var c=S.meta.customers;
+    if(c&&c.alloc&&c.alloc[id]!==undefined){var a=Object.assign({},c.alloc);delete a[id];await write('meta','customers',{total:num(c.total),alloc:a},{merge:false});}
+  }
+}
+
+/* ---------- daily rhythm ---------- */
+var POOL=[
+  {title:'Serve 20 customers',desc:'Keep your counter moving and finish 20 orders today.',target:20,reward:150},
+  {title:'Earn 500 in a day',desc:'Bring in 500 in sales before the day resets.',target:500,reward:200},
+  {title:'Buy a piece of furniture',desc:'Pick up any furniture from the shop.',target:1,reward:100},
+  {title:'Place a new decor item',desc:'Put one new decoration in your store.',target:1,reward:120},
+  {title:'Add a player to your web',desc:'Connect with someone you have not added yet.',target:1,reward:90},
+  {title:'Reach a 4.0 rating',desc:'Finish the day with a rating of 4.0 or higher.',target:4,reward:250},
+  {title:'Unlock a blueprint',desc:'Buy a wall or door blueprint.',target:1,reward:180},
+  {title:'Serve 5 in a row',desc:'Serve five customers without losing one.',target:5,reward:130},
+  {title:'Visit a friend’s store',desc:'Drop by a connected player’s store.',target:1,reward:80},
+  {title:'Spend 300 at the shops',desc:'Spend at least 300 across furniture, decor and blueprints.',target:300,reward:140},
+  {title:'Rearrange your layout',desc:'Change the layout of your store once.',target:1,reward:70},
+  {title:'Fill every table',desc:'Have every table in your store occupied at once.',target:1,reward:160}
+];
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+async function rollQuests(){
+  S.rolled=true;
+  var old=S.quests.slice(),i;
+  for(i=0;i<old.length;i++)await removeDoc('quests',old[i].id);
+  var pick=shuffle(POOL).slice(0,4);
+  for(i=0;i<pick.length;i++){
+    var id=db.collection('quests').doc().id;
+    await write('quests',id,{title:pick[i].title,desc:pick[i].desc,target:pick[i].target,reward:pick[i].reward,doneBy:[]},{merge:false});
+  }
+  await write('meta','day',{date:today()},{merge:false});
+}
+function maybeRoll(){
+  if(S.owner&&!S.rolled&&S.loaded.meta&&S.loaded.quests&&(S.meta.day||{}).date!==today()){rollQuests();}
+}
+async function newDay(){
+  var i;
+  for(i=0;i<S.stores.length;i++)await write('stores',S.stores[i].id,{earnedToday:0,served:0});
+  await write('meta','customers',{total:0,alloc:{}},{merge:false});
+  await rollQuests();
+  toast('New day started');
+}
+function untilMidnight(){
+  var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1);
+  var s=Math.max(0,Math.floor((m-n)/1000));
+  return pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60);
+}
+
+/* ---------- rendering ---------- */
+var raf=0;
+function schedule(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;if(editingInline()){S.dirty=true;return;}render();});}
+function editingInline(){var a=document.activeElement;return !!(a&&a.closest&&a.closest('#panel')&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));}
+document.addEventListener('focusout',function(){setTimeout(function(){if(S.dirty&&!editingInline()){S.dirty=false;schedule();}},0);});
+
+function statusInfo(){
+  if(S.noDb)return ['bad',S.setup?'Setup needed':'Not connected'];
+  if(S.status==='error')return ['bad','Offline'];
+  if(S.status==='connecting')return ['warn','Connecting'];
+  if(S.saving>0)return ['warn','Saving…'];
+  return ['','Live'];
+}
+function paintStatus(){var el=$('#status');if(!el)return;var s=statusInfo();el.className='pill '+s[0];el.innerHTML='<span class="dot"></span>'+esc(s[1]);}
+
+function avatar(name){
+  var n=String(name||'?'),h=0,i;
+  for(i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%360;
+  return '<span class="av" style="background:hsl('+h+' 42% 40%)" aria-hidden="true">'+esc(n.trim().charAt(0).toUpperCase()||'?')+'</span>';
+}
+function numInput(coll,id,k,val,o){
+  o=o||{};
+  return '<span class="inwrap">'+(o.pre?'<span class="pre">'+esc(o.pre)+'</span>':'')+
+    '<input class="qin" type="number" inputmode="decimal" step="'+(o.step||'any')+'"'+(o.min!=null?' min="'+o.min+'"':'')+(o.max!=null?' max="'+o.max+'"':'')+
+    ' value="'+esc(num(val))+'" aria-label="'+esc(o.label||k)+'" data-qin="1" data-coll="'+esc(coll)+'" data-id="'+esc(id)+'" data-k="'+esc(k)+'"'+(o.sub?' data-sub="'+esc(o.sub)+'"':'')+'></span>';
+}
+function empty(title,text,btn){return '<div class="empty"><b>'+esc(title)+'</b>'+(text?'<p>'+esc(text)+'</p>':'')+(btn||'')+'</div>';}
+function addBtn(coll,label,extra){return '<button class="btn primary" data-act="add" data-coll="'+coll+'"'+(extra||'')+'>'+esc(label)+'</button>';}
+
+function render(){
+  var s=S.meta.settings||{};
+  var g=$('#gname');var gn=s.gameName||'Your game';if(g.textContent!==gn)g.textContent=gn;
+  setHtml($('#mastright'),mastRight());paintStatus();
+  var ab=$('#adminbar');setHtml(ab,adminBar());ab.hidden=!S.owner;
+  setHtml($('#summary'),summary());
+  setHtml($('#tabs'),tabsHtml());
+  setHtml($('#panel'),panel());
+  setHtml($('#foot'),S.noDb?'':(S.owner?'<button data-act="signout">Sign out</button>':(S.signedIn?'<span>This account cannot edit.</span><button data-act="signout">Sign out</button>':'<button data-act="signin">Owner sign in</button>')));
+}
+function mastRight(){
+  var h='<span id="status" class="pill"></span>';
+  if(S.owner){h+='<div class="seg" role="group" aria-label="View"><button data-act="mode" data-mode="admin" aria-pressed="'+S.adminView+'">Admin</button><button data-act="mode" data-mode="viewer" aria-pressed="'+!S.adminView+'">Viewer view</button></div>';}
+  return h;
+}
+function adminBar(){
+  if(!S.owner)return '';
+  if(!S.adminView)return '<p>You are previewing the <b>read-only dashboard</b> exactly as other people see it.</p><button class="btn primary" data-act="mode" data-mode="admin">Back to admin</button>';
+  return '<p><b>Admin panel.</b> Only you can change anything here. Everyone else sees the clean read-only dashboard, updated the moment you save.</p>'+
+    (ready()&&S.players.length+S.stores.length+S.shops.length===0?'<button class="btn primary" data-act="seed">Load sample data</button>':'')+
+    '<button class="btn" data-act="settings">Game settings</button>'+
+    '<button class="btn" data-act="roll" data-arm="Click again to roll quests">Roll quests</button>'+
+    '<button class="btn danger" data-act="newday" data-arm="Click again to reset the day">Start new day</button>';
+}
+function summary(){
+  var total=S.players.reduce(function(a,p){return a+num(p.money);},0);
+  var earned=S.stores.reduce(function(a,s){return a+num(s.earnedToday);},0);
+  var cust=num((S.meta.customers||{}).total);
+  function it(l,v,c){return '<div><dt>'+l+'</dt><dd class="'+(c||'')+'">'+esc(v)+'</dd></div>';}
+  return it('Players',int(S.players.length))+it('Money in play',money(total),'coin')+it('Earned today',money(earned),'coin')+it('Customers today',int(cust));
+}
+function tabsHtml(){
+  return TABS.map(function(t){return '<button class="tab" role="tab" data-act="tab" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+'</button>';}).join('');
+}
+function panel(){
+  if(S.setup)return empty('Setup needed','Open firebase-config.js and paste your Firebase settings. The README lists every step.');
+  if(S.noDb)return empty('Live data is not available','The site could not reach its database. Check your connection and reload.');
+  if(!ready())return empty('Loading live data…','');
+  switch(S.tab){
+    case 'players':return playersPanel();
+    case 'network':return networkPanel();
+    case 'stores':return storesPanel();
+    case 'customers':return customersPanel();
+    case 'shops':return shopsPanel();
+    case 'leaderboard':return leaderboardPanel();
+    case 'quests':return questsPanel();
+  }
+  return '';
+}
+
+/* players */
+function playersPanel(){
+  var e=ed();
+  return '<div class="bar"><label class="search"><span class="sr">Search players</span><input id="q" type="search" placeholder="Search players" value="'+esc(S.q)+'" autocomplete="off"></label>'+(e?addBtn('players','Add player'):'')+'</div><div id="plist" class="stack">'+playersList()+'</div>';
+}
+function playersList(){
+  var q=S.q.trim().toLowerCase();
+  var list=S.players.slice().sort(function(a,b){return num(b.money)-num(a.money);});
+  if(q)list=list.filter(function(p){return String(p.name).toLowerCase().indexOf(q)>=0;});
+  if(!list.length){
+    return S.players.length?empty('No players match that search.',''):empty('No players yet.',ed()?'Add the first player to start tracking money and stats.':'Players will appear here once the owner adds them.',ed()?addBtn('players','Add player'):'');
+  }
+  return list.map(playerRow).join('');
+}
+function playerRow(p){
+  var e=ed(),fc=friendCount(p.id),st=Object.keys(p.stats||{});
+  return '<article class="row"><div class="who">'+avatar(p.name)+'<div class="whotxt"><h3>'+esc(p.name)+'</h3><p>'+fc+(fc===1?' connection':' connections')+'</p></div></div>'+
+    '<div class="cell"><span class="lbl">Money</span>'+(e?numInput('players',p.id,'money',p.money,{pre:cur(),label:'Money for '+p.name}):'<span class="num coin">'+money(p.money)+'</span>')+'</div>'+
+    '<div class="cell grow"><span class="lbl">Stats</span><div class="chips">'+(st.length?st.map(function(k){return '<span class="chip"><span>'+esc(k)+'</span><b>'+int(p.stats[k])+'</b></span>';}).join(''):'<span class="faint">None yet</span>')+'</div></div>'+
+    (e?'<button class="btn" data-act="edit" data-coll="players" data-id="'+esc(p.id)+'">Edit</button>':'')+'</article>';
+}
+
+/* network */
+function networkPanel(){
+  var e=ed(),P=S.players;
+  var links=S.friends.filter(function(f){return byId(P,f.a)&&byId(P,f.b);});
+  var h='<div class="bar"><div><h2>Player web</h2><p class="hint">'+links.length+(links.length===1?' connection':' connections')+' between players</p></div></div>';
+  if(e&&P.length>=2){
+    var opts=P.slice().sort(function(a,b){return String(a.name).localeCompare(b.name);}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join('');
+    h+='<div class="linkform"><select id="fa" aria-label="First player">'+opts+'</select><select id="fb" aria-label="Second player">'+opts+'</select><button class="btn primary" data-act="connect">Connect</button></div>';
+  }
+  if(P.length<2){
+    return h+empty('The web needs two players.',e?'Add at least two players, then connect them here.':'Connections will show up once players are added.',e?addBtn('players','Add player'):'');
+  }
+  h+='<div class="webwrap">'+webSvg()+'</div>';
+  if(links.length){
+    h+='<div class="stack">'+links.map(function(f){
+      var a=byId(P,f.a),b=byId(P,f.b);
+      return '<div class="linkrow"><span><b>'+esc(a.name)+'</b> and <b>'+esc(b.name)+'</b></span>'+(e?'<button class="btn ico" data-act="unlink" data-id="'+esc(f.id)+'" aria-label="Remove connection">×</button>':'')+'</div>';
+    }).join('')+'</div>';
+  }else{
+    h+=empty('No connections yet.',e?'Pick two players above and press Connect.':'');
+  }
+  return h;
+}
+function webSvg(){
+  var P=S.players.slice().sort(function(a,b){return String(a.name).localeCompare(b.name);}),n=P.length;
+  var cx=360,cy=225,rx=235,ry=150,pos={};
+  P.forEach(function(p,i){var t=-Math.PI/2+2*Math.PI*i/n;pos[p.id]={x:cx+rx*Math.cos(t),y:cy+ry*Math.sin(t),c:Math.cos(t),s:Math.sin(t),n:friendCount(p.id)};});
+  var lines=S.friends.filter(function(f){return pos[f.a]&&pos[f.b];}).map(function(f){return '<line class="web-l" x1="'+pos[f.a].x.toFixed(1)+'" y1="'+pos[f.a].y.toFixed(1)+'" x2="'+pos[f.b].x.toFixed(1)+'" y2="'+pos[f.b].y.toFixed(1)+'"/>';}).join('');
+  var nodes=P.map(function(p){
+    var q=pos[p.id],r=8+Math.min(q.n,8),off=r+8;
+    var anchor=q.c>0.25?'start':(q.c<-0.25?'end':'middle');
+    var lx=q.x+(q.c>0.25?off:(q.c<-0.25?-off:0));
+    var ly=Math.abs(q.c)<=0.25?(q.s>0?q.y+r+15:q.y-r-6):q.y+4;
+    var nm=String(p.name);if(nm.length>16)nm=nm.slice(0,15)+'…';
+    return '<circle class="web-n" cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="'+r+'"/><text class="web-t" x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="'+anchor+'">'+esc(nm)+'</text>';
+  }).join('');
+  return '<svg viewBox="0 0 720 450" role="img" aria-label="Network of players and their connections">'+lines+nodes+'</svg>';
+}
+
+/* stores */
+function storesPanel(){
+  var e=ed();
+  var h='<div class="bar"><div><h2>Stores</h2><p class="hint">Today’s numbers for every store</p></div>'+(e?addBtn('stores','Add store'):'')+'</div>';
+  if(!S.stores.length)return h+empty('No stores yet.',e?'Add a store to track what it earns today.':'Stores will appear here once the owner adds them.',e?addBtn('stores','Add store'):'');
+  var list=S.stores.slice().sort(function(a,b){return num(b.earnedToday)-num(a.earnedToday);});
+  return h+'<div class="grid">'+list.map(storeCard).join('')+'</div>';
+}
+function storeCard(s){
+  var e=ed(),o=byId(S.players,s.ownerId),r=Math.max(0,Math.min(5,num(s.rating)));
+  return '<article class="card"><div class="card-top"><div><h3>'+esc(s.name)+'</h3><p class="meta">Owner: '+(o?esc(o.name):'Unassigned')+'</p></div>'+(e?'<button class="btn" data-act="edit" data-coll="stores" data-id="'+esc(s.id)+'">Edit</button>':'')+'</div>'+
+    '<div class="metrics"><div class="cell"><span class="lbl">Money earned today</span>'+(e?numInput('stores',s.id,'earnedToday',s.earnedToday,{pre:cur(),label:'Money earned today at '+s.name}):'<span class="num coin">'+money(s.earnedToday)+'</span>')+'</div>'+
+    '<div class="cell"><span class="lbl">Customers served</span>'+(e?numInput('stores',s.id,'served',s.served,{label:'Customers served at '+s.name}):'<span class="num">'+int(s.served)+'</span>')+'</div>'+
+    '<div class="cell full"><span class="lbl">Rating</span><div class="rate">'+(e?numInput('stores',s.id,'rating',s.rating,{step:'0.1',min:0,max:5,label:'Rating of '+s.name}):'<span class="num">'+r.toFixed(1)+'</span>')+'<div class="track" role="img" aria-label="Rating '+r.toFixed(1)+' out of 5"><i style="width:'+(r/5*100)+'%"></i></div></div></div></div></article>';
+}
+
+/* customers */
+function customersPanel(){
+  var e=ed(),c=S.meta.customers||{},total=num(c.total),alloc=c.alloc||{};
+  var assigned=0;S.stores.forEach(function(s){assigned+=num(alloc[s.id]);});
+  var free=Math.max(0,total-assigned),denom=Math.max(total,assigned,1);
+  var h='<div class="bar"><div><h2>Customers today</h2><p class="hint">How many are coming, and where they are going</p></div></div>';
+  h+='<div class="flowhead"><div class="cell"><span class="lbl">Coming today</span>'+(e?numInput('meta','customers','total',total,{label:'Customers coming today'}):'<span class="big">'+int(total)+'</span>')+'</div>'+
+     '<div class="cell"><span class="lbl">Going to stores</span><span class="num">'+int(assigned)+'</span></div>'+
+     '<div class="cell"><span class="lbl">Not in a store yet</span><span class="num">'+int(free)+'</span></div></div>';
+  if(!S.stores.length)return h+empty('No stores to send customers to.',e?'Add a store first.':'');
+  var segs=S.stores.map(function(s,i){var n=num(alloc[s.id]);return n>0?'<span style="width:'+(n/denom*100)+'%;background:var(--c'+(i%6+1)+')" title="'+esc(s.name)+'"></span>':'';}).join('')+(free>0?'<span class="free" style="width:'+(free/denom*100)+'%" title="Not in a store yet"></span>':'');
+  h+='<div class="stackbar" role="img" aria-label="Customers split across stores">'+segs+'</div><div class="stack" style="margin-top:14px">';
+  h+=S.stores.map(function(s,i){
+    var n=num(alloc[s.id]),pct=total>0?Math.round(n/total*100):0;
+    return '<div class="crow"><div class="nm"><span class="sw" style="background:var(--c'+(i%6+1)+')"></span>'+esc(s.name)+'</div>'+
+      (e?numInput('meta','customers','alloc',n,{sub:s.id,label:'Customers going to '+s.name}):'<span class="num">'+int(n)+'</span>')+'<span class="sh">'+pct+'%</span></div>';
+  }).join('')+'</div>';
+  if(assigned>total&&total>0)h+='<p class="faint" style="margin-top:10px">More customers are assigned to stores than are coming today. Raise the total or lower a store.</p>';
+  return h;
+}
+
+/* shops */
+function shopsPanel(){
+  var e=ed(),bp=S.shopTab==='blueprints';
+  var kinds=bp?['blueprint']:['furniture','decor'];
+  var items=S.shops.filter(function(i){return kinds.indexOf(i.kind)>=0&&(e||i.available!==false);});
+  var h='<div class="bar"><div class="subtabs" role="group" aria-label="Shop"><button data-act="shoptab" data-shop="furniture" aria-pressed="'+!bp+'">Furniture &amp; decor</button><button data-act="shoptab" data-shop="blueprints" aria-pressed="'+bp+'">Blueprints</button></div>'+(e?addBtn('shops',bp?'Add blueprint':'Add item',' data-kind="'+(bp?'blueprint':'furniture')+'"'):'')+'</div>';
+  if(!items.length)return h+empty(bp?'No blueprints for sale.':'No furniture or decor for sale.',e?'Add the first item for this shop.':'Check back soon.',e?addBtn('shops',bp?'Add blueprint':'Add item',' data-kind="'+(bp?'blueprint':'furniture')+'"'):'');
+  var groups={};
+  items.forEach(function(i){var g=(i.group||'').trim()||(bp?'Other blueprints':i.kind==='decor'?'Decor':'Furniture');(groups[g]=groups[g]||[]).push(i);});
+  Object.keys(groups).sort().forEach(function(g){
+    h+='<div class="group">'+esc(g)+'</div><div class="grid">'+groups[g].sort(function(a,b){return num(a.price)-num(b.price);}).map(itemCard).join('')+'</div>';
+  });
+  return h;
+}
+function itemCard(i){
+  var e=ed(),out=i.stock!=null&&num(i.stock)<=0&&i.stock!=='';
+  var stock=i.stock==null||i.stock===''?'Unlimited':(out?'Sold out':int(i.stock)+' left');
+  return '<article class="item'+(i.available===false?' hidden':'')+'"><div class="line"><h4>'+esc(i.name)+'</h4><span class="num coin">'+money(i.price)+'</span></div>'+
+    '<div class="line"><span class="tag'+(out?' bad':'')+'">'+esc(stock)+'</span>'+(i.available===false?'<span class="tag">Hidden from viewers</span>':'')+(e?'<button class="btn" data-act="edit" data-coll="shops" data-id="'+esc(i.id)+'">Edit</button>':'')+'</div></article>';
+}
+
+/* leaderboard */
+function fieldOptions(source){
+  if(source==='stores')return [['earnedToday','Money earned today'],['served','Customers served'],['rating','Rating']];
+  var keys={};S.players.forEach(function(p){Object.keys(p.stats||{}).forEach(function(k){keys[k]=1;});});
+  return [['money','Money']].concat(Object.keys(keys).sort().map(function(k){return [k,k];}));
+}
+function fieldLabel(source,field){var o=fieldOptions(source).filter(function(x){return x[0]===field;})[0];return o?o[1]:field;}
+function boardRows(b){
+  var src=b.source==='stores'?S.stores:S.players;
+  var rows=src.map(function(r){
+    var v=b.source==='stores'?num(r[b.field]):(b.field==='money'?num(r.money):num((r.stats||{})[b.field]));
+    return {name:r.name,v:v};
+  });
+  rows.sort(function(a,c){return b.dir==='asc'?a.v-c.v:c.v-a.v;});
+  return rows.slice(0,10);
+}
+function fmtField(b,v){
+  if((b.source==='players'&&b.field==='money')||(b.source==='stores'&&b.field==='earnedToday'))return money(v);
+  if(b.source==='stores'&&b.field==='rating')return num(v).toFixed(1);
+  return int(v);
+}
+function leaderboardPanel(){
+  var e=ed();
+  var h='<div class="bar"><div><h2>Leaderboards</h2><p class="hint">Ranked live from player and store numbers</p></div>'+(e?addBtn('boards','Add board'):'')+'</div>';
+  if(!S.boards.length)return h+empty('No leaderboards yet.',e?'Add a board and pick what it ranks.':'',e?addBtn('boards','Add board'):'');
+  return h+'<div class="grid">'+S.boards.map(boardCard).join('')+'</div>';
+}
+function boardCard(b){
+  var e=ed(),rows=boardRows(b),mx=Math.max.apply(null,rows.map(function(r){return Math.abs(r.v);}).concat([1]));
+  return '<article class="card board"><div class="card-top"><div><h3>'+esc(b.title)+'</h3><p class="meta">'+(b.source==='stores'?'Stores':'Players')+' · '+esc(fieldLabel(b.source,b.field))+(b.dir==='asc'?' · lowest first':'')+'</p></div>'+(e?'<button class="btn" data-act="edit" data-coll="boards" data-id="'+esc(b.id)+'">Edit</button>':'')+'</div>'+
+    (rows.length?'<ol>'+rows.map(function(r,i){return '<li><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(r.name)+'</span><span class="vl">'+esc(fmtField(b,r.v))+'</span><div class="track"><i style="width:'+Math.max(2,Math.abs(r.v)/mx*100)+'%"></i></div></li>';}).join('')+'</ol>':'<p class="faint">Nothing to rank yet.</p>')+'</article>';
+}
+
+/* quests */
+function questsPanel(){
+  var e=ed(),day=(S.meta.day||{}).date;
+  var h='<div class="bar"><div><h2>Daily quests</h2><p class="hint">Refreshed '+(day?esc(day):'daily')+' · next reset in <span id="cd" class="num">'+untilMidnight()+'</span></p></div>'+(e?addBtn('quests','Add quest'):'')+'</div>';
+  if(!S.quests.length)return h+empty('No quests today.',e?'Roll today’s quests from the admin bar, or add your own.':'Check back after the next reset.',e?addBtn('quests','Add quest'):'');
+  return h+'<div class="grid">'+S.quests.map(questCard).join('')+'</div>';
+}
+function questCard(q){
+  var e=ed(),done=(q.doneBy||[]).filter(function(id){return byId(S.players,id);});
+  var chips=e?S.players.map(function(p){return '<button class="pchip" data-act="done" data-q="'+esc(q.id)+'" data-p="'+esc(p.id)+'" aria-pressed="'+(done.indexOf(p.id)>=0)+'">'+esc(p.name)+'</button>';}).join(''):done.map(function(id){return '<span class="chip">'+esc(byId(S.players,id).name)+'</span>';}).join('');
+  return '<article class="card qcard"><div class="card-top"><div><h3>'+esc(q.title)+'</h3><p class="meta">'+esc(q.desc||'')+'</p></div>'+(e?'<button class="btn" data-act="edit" data-coll="quests" data-id="'+esc(q.id)+'">Edit</button>':'')+'</div>'+
+    '<div class="line" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><span class="reward">Reward '+money(q.reward)+'</span><span class="faint">Goal '+int(q.target)+'</span></div>'+
+    '<div><span class="lbl">Completed by '+done.length+' of '+S.players.length+'</span><div class="chips" style="margin-top:6px">'+(chips||'<span class="faint">Nobody yet</span>')+'</div></div></article>';
+}
+
+/* ---------- editor modal ---------- */
+var SCHEMAS={
+  players:{noun:'player',del:true,fields:[
+    {k:'name',label:'Name',t:'text',req:true,max:40},
+    {k:'money',label:'Money',t:'number'},
+    {k:'stats',label:'Stats (anything you want to track)',t:'stats'}]},
+  stores:{noun:'store',del:true,fields:[
+    {k:'name',label:'Store name',t:'text',req:true,max:48},
+    {k:'ownerId',label:'Owner',t:'select',opts:function(){return [['','Unassigned']].concat(S.players.map(function(p){return [p.id,p.name];}));}},
+    {k:'earnedToday',label:'Money earned today',t:'number'},
+    {k:'served',label:'Customers served',t:'number'},
+    {k:'rating',label:'Rating (0 to 5)',t:'number',min:0,max:5,step:'0.1'}]},
+  shops:{noun:'shop item',del:true,fields:[
+    {k:'kind',label:'Type',t:'select',opts:function(){return [['furniture','Furniture'],['decor','Decor'],['blueprint','Blueprint']];}},
+    {k:'name',label:'Name',t:'text',req:true,max:48},
+    {k:'group',label:'Category (Wall, Door, Chair…)',t:'text',max:30,list:'groups'},
+    {k:'price',label:'Price',t:'number',min:0},
+    {k:'stock',label:'Stock (leave empty for unlimited)',t:'number',min:0,optional:true},
+    {k:'available',label:'Visible to viewers',t:'check'}]},
+  boards:{noun:'leaderboard',del:true,fields:[
+    {k:'title',label:'Title',t:'text',req:true,max:48},
+    {k:'source',label:'Ranks',t:'select',opts:function(){return [['players','Players'],['stores','Stores']];}},
+    {k:'field',label:'By',t:'boardfield'},
+    {k:'dir',label:'Order',t:'select',opts:function(){return [['desc','Highest first'],['asc','Lowest first']];}}]},
+  quests:{noun:'quest',del:true,fields:[
+    {k:'title',label:'Title',t:'text',req:true,max:60},
+    {k:'desc',label:'Description',t:'text',max:140},
+    {k:'target',label:'Goal',t:'number',min:0},
+    {k:'reward',label:'Reward',t:'number',min:0}]},
+  settings:{noun:'game settings',title:'Game settings',coll:'meta',id:'settings',fields:[
+    {k:'gameName',label:'Game name',t:'text',max:40},
+    {k:'currency',label:'Currency symbol',t:'text',max:3}]}
+};
+function defaults(key,preset){
+  var d={
+    players:{name:'',money:0,stats:{}},
+    stores:{name:'',ownerId:'',earnedToday:0,served:0,rating:4},
+    shops:{kind:'furniture',name:'',group:'',price:0,stock:null,available:true},
+    boards:{title:'',source:'players',field:'money',dir:'desc'},
+    quests:{title:'',desc:'',target:1,reward:100,doneBy:[]},
+    settings:{gameName:'',currency:'$'}
+  }[key];
+  return Object.assign({},d,preset||{});
+}
+function statRow(k,v){
+  return '<div class="statrow"><input class="sk" placeholder="Stat name" aria-label="Stat name" list="dl_stats" value="'+esc(k)+'"><input class="sv" type="number" step="any" aria-label="Stat value" value="'+esc(v)+'"><button type="button" class="btn ico" data-act="rmstat" aria-label="Remove stat">×</button></div>';
+}
+function optsHtml(list,sel){return list.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(sel)?' selected':'')+'>'+esc(o[1])+'</option>';}).join('');}
+function fieldHtml(f,cur){
+  var v=cur[f.k],id='f_'+f.k;
+  if(f.t==='text'){
+    var dl='';
+    if(f.list==='groups'){var gs={};S.shops.forEach(function(i){if(i.group)gs[i.group]=1;});dl='<datalist id="dl_groups">'+Object.keys(gs).map(function(g){return '<option value="'+esc(g)+'">';}).join('')+'</datalist>';}
+    return '<label class="fld"><span>'+esc(f.label)+'</span><input id="'+id+'" name="'+f.k+'" type="text" value="'+esc(v)+'"'+(f.req?' required':'')+(f.max?' maxlength="'+f.max+'"':'')+(f.list?' list="dl_'+f.list+'"':'')+'></label>'+dl;
+  }
+  if(f.t==='number')return '<label class="fld"><span>'+esc(f.label)+'</span><input id="'+id+'" name="'+f.k+'" type="number" inputmode="decimal" step="'+(f.step||'any')+'"'+(f.min!=null?' min="'+f.min+'"':'')+(f.max!=null?' max="'+f.max+'"':'')+' value="'+(v==null?'':esc(v))+'"'+(f.optional?' placeholder="Unlimited"':'')+'></label>';
+  if(f.t==='select')return '<label class="fld"><span>'+esc(f.label)+'</span><select id="'+id+'" name="'+f.k+'">'+optsHtml(f.opts(),v)+'</select></label>';
+  if(f.t==='boardfield')return '<label class="fld"><span>'+esc(f.label)+'</span><select id="'+id+'" name="'+f.k+'">'+optsHtml(fieldOptions(cur.source),v)+'</select></label>';
+  if(f.t==='check')return '<label class="fld chk"><input id="'+id+'" name="'+f.k+'" type="checkbox"'+(v!==false?' checked':'')+'><span>'+esc(f.label)+'</span></label>';
+  if(f.t==='stats'){
+    var keys={};S.players.forEach(function(p){Object.keys(p.stats||{}).forEach(function(k){keys[k]=1;});});
+    var rows=Object.keys(v||{}).map(function(k){return statRow(k,v[k]);}).join('');
+    return '<div class="fld"><span>'+esc(f.label)+'</span><div id="statrows">'+rows+'</div><datalist id="dl_stats">'+Object.keys(keys).map(function(k){return '<option value="'+esc(k)+'">';}).join('')+'</datalist><div><button type="button" class="btn" data-act="addstat">Add a stat</button></div></div>';
+  }
+  return '';
+}
+var lastFocus=null;
+function openModal(key,id,preset){
+  var sc=SCHEMAS[key],coll=sc.coll||key,docId=sc.id||id||null;
+  var existing=docId?getDoc(coll,docId):null;
+  var cur=existing?Object.assign(defaults(key),existing):defaults(key,preset);
+  S.modal={key:key,coll:coll,id:docId,isNew:!existing};
+  lastFocus=document.activeElement;
+  var m=$('#modal');
+  m.innerHTML='<form class="sheet" id="mform" autocomplete="off" role="dialog" aria-modal="true" aria-label="'+esc(sc.title||((existing?'Edit ':'Add ')+sc.noun))+'"><h2>'+esc(sc.title||((existing?'Edit ':'Add ')+sc.noun))+'</h2>'+
+    sc.fields.map(function(f){return fieldHtml(f,cur);}).join('')+
+    '<div class="sheet-acts">'+(existing&&sc.del?'<button type="button" class="btn danger" data-act="del" data-arm="Click again to delete">Delete</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">Save</button></div></form>';
+  m.hidden=false;
+  var first=m.querySelector('input:not([type=checkbox]),select');if(first)first.focus();
+}
+function closeModal(){
+  var m=$('#modal');m.hidden=true;m.innerHTML='';S.modal=null;
+  if(lastFocus&&lastFocus.focus&&document.contains(lastFocus)){try{lastFocus.focus();}catch(e){}}
+}
+async function submitModal(ev){
+  ev.preventDefault();
+  var md=S.modal;if(!md)return;
+  var sc=SCHEMAS[md.key],form=$('#mform'),data={},i;
+  for(i=0;i<sc.fields.length;i++){
+    var f=sc.fields[i],el=form.elements[f.k];
+    if(f.t==='stats'){
+      var st={};
+      form.querySelectorAll('.statrow').forEach(function(r){var k=r.querySelector('.sk').value.trim();if(k)st[k]=num(r.querySelector('.sv').value);});
+      data.stats=st;
+    }else if(f.t==='check'){data[f.k]=el.checked;}
+    else if(f.t==='number'){
+      var raw=el.value.trim();
+      if(raw===''){data[f.k]=f.optional?null:0;}
+      else{var n=num(raw);if(f.min!=null)n=Math.max(f.min,n);if(f.max!=null)n=Math.min(f.max,n);data[f.k]=n;}
+    }else{
+      data[f.k]=el.value.trim();
+      if(f.req&&!data[f.k]){el.focus();toast('Fill in the '+f.label.toLowerCase()+' first.','bad');return;}
+    }
+  }
+  var id=md.id||db.collection(md.coll).doc().id;
+  var existing=getDoc(md.coll,id)||{};
+  closeModal();
+  if(md.key==='settings'&&!data.gameName)data.gameName='Your game';
+  if(md.key==='settings'&&!data.currency)data.currency='$';
+  var ok=await write(md.coll,id,Object.assign({},existing,data),{merge:false});
+  if(ok)toast('Saved');
+}
+async function deleteCurrent(){
+  var md=S.modal;if(!md||!md.id)return;
+  var coll=md.coll,id=md.id;closeModal();
+  if(await removeDoc(coll,id)){await afterDelete(coll,id);toast('Deleted');}
+}
+
+/* ---------- events ---------- */
+function arm(btn,run){
+  if(btn.dataset.armed){clearTimeout(Number(btn.dataset.armed));delete btn.dataset.armed;btn.textContent=btn.dataset.label;btn.classList.remove('armed');run();return;}
+  btn.dataset.label=btn.textContent;btn.textContent=btn.dataset.arm;btn.classList.add('armed');
+  btn.dataset.armed=String(setTimeout(function(){btn.textContent=btn.dataset.label;btn.classList.remove('armed');delete btn.dataset.armed;},4000));
+}
+var toastT=0;
+function toast(msg,kind){var t=$('#toast');t.textContent=msg;t.className='toast'+(kind==='bad'?' bad':'');t.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true;},2600);}
+
+document.addEventListener('click',function(ev){
+  var t=ev.target.closest('[data-act]');
+  if(!t){if(ev.target.id==='modal')closeModal();return;}
+  var a=t.dataset.act;
+  if(a==='tab'){S.tab=t.dataset.tab;try{localStorage.setItem('tcr-tab',S.tab);}catch(e){}render();return;}
+  if(a==='shoptab'){S.shopTab=t.dataset.shop;render();return;}
+  if(a==='mode'){S.adminView=t.dataset.mode==='admin';render();return;}
+  if(a==='close'){closeModal();return;}
+  if(a==='addstat'){var box=$('#statrows');if(box){box.insertAdjacentHTML('beforeend',statRow('',''));var ins=box.querySelectorAll('.sk');ins[ins.length-1].focus();}return;}
+  if(a==='rmstat'){var row=t.closest('.statrow');if(row)row.remove();return;}
+  if(a==='signin'){if(S.signIn)S.signIn();return;}
+  if(a==='signout'){if(S.signOut)S.signOut();return;}
+  if(!S.owner)return;
+  if(a==='seed'){seedSample();return;}
+  if(a==='add'){openModal(t.dataset.coll,null,t.dataset.kind?{kind:t.dataset.kind}:null);return;}
+  if(a==='edit'){openModal(t.dataset.coll,t.dataset.id);return;}
+  if(a==='settings'){openModal('settings');return;}
+  if(a==='del'){arm(t,deleteCurrent);return;}
+  if(a==='roll'){arm(t,async function(){await rollQuests();toast('Quests rolled');});return;}
+  if(a==='newday'){arm(t,newDay);return;}
+  if(a==='connect'){
+    var x=$('#fa').value,y=$('#fb').value;
+    if(!x||!y||x===y){toast('Pick two different players.','bad');return;}
+    var key=[x,y].sort().join('~');
+    if(byId(S.friends,key)){toast('They are already connected.');return;}
+    write('friends',key,{a:x,b:y},{merge:false});return;
+  }
+  if(a==='unlink'){removeDoc('friends',t.dataset.id);return;}
+  if(a==='done'){
+    var q=byId(S.quests,t.dataset.q);if(!q)return;
+    var list=(q.doneBy||[]).slice(),ix=list.indexOf(t.dataset.p);
+    if(ix>=0)list.splice(ix,1);else list.push(t.dataset.p);
+    write('quests',q.id,{doneBy:list});return;
+  }
+});
+document.addEventListener('change',function(ev){
+  var el=ev.target;
+  if(el.matches&&el.matches('[data-qin]')){
+    if(!S.owner)return;
+    var n=num(el.value);
+    if(el.dataset.k==='rating')n=Math.max(0,Math.min(5,n));
+    var patch={};
+    if(el.dataset.sub){patch[el.dataset.k]={};patch[el.dataset.k][el.dataset.sub]=n;}else{patch[el.dataset.k]=n;}
+    write(el.dataset.coll,el.dataset.id,patch);
+    return;
+  }
+  if(el.name==='source'&&el.closest('#mform')){
+    var sel=$('#f_field');if(sel)sel.innerHTML=optsHtml(fieldOptions(el.value),'');
+  }
+});
+document.addEventListener('input',function(ev){
+  if(ev.target.id==='q'){S.q=ev.target.value;var pl=$('#plist');if(pl)pl.innerHTML=playersList();}
+});
+document.addEventListener('submit',function(ev){if(ev.target.id==='mform')submitModal(ev);});
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&S.modal)closeModal();});
+setInterval(function(){var c=$('#cd');if(c)c.textContent=untilMidnight();},1000);
+setTimeout(function(){S.timeout=true;schedule();},4000);
+
+/* ---------- sample data ---------- */
+async function seedSample(){
+  var L=[
+    ['meta','settings',{gameName:'My Tycoon Game',currency:'$'}],
+    ['meta','customers',{total:240,alloc:{s_nora:80,s_kade:55,s_ines:90}}],
+    ['players','p_nora',{name:'Nora (sample)',money:12450,stats:{'Meals served':340,'Days played':21}}],
+    ['players','p_kade',{name:'Kade (sample)',money:8200,stats:{'Meals served':210,'Days played':14}}],
+    ['players','p_ines',{name:'Ines (sample)',money:15900,stats:{'Meals served':455,'Days played':27}}],
+    ['players','p_ravi',{name:'Ravi (sample)',money:3100,stats:{'Meals served':60,'Days played':5}}],
+    ['stores','s_nora',{name:'Noodle Bar (sample)',ownerId:'p_nora',earnedToday:1840,served:62,rating:4.6}],
+    ['stores','s_kade',{name:'Corner Cafe (sample)',ownerId:'p_kade',earnedToday:920,served:31,rating:4.1}],
+    ['stores','s_ines',{name:'Bakehouse (sample)',ownerId:'p_ines',earnedToday:2310,served:77,rating:4.8}],
+    ['friends','p_ines~p_nora',{a:'p_nora',b:'p_ines'}],
+    ['friends','p_kade~p_nora',{a:'p_nora',b:'p_kade'}],
+    ['friends','p_ines~p_ravi',{a:'p_ines',b:'p_ravi'}],
+    ['shops','sh_table',{kind:'furniture',name:'Oak bistro table',group:'Tables',price:220,stock:40,available:true}],
+    ['shops','sh_chair',{kind:'furniture',name:'Cushioned chair',group:'Seating',price:90,stock:null,available:true}],
+    ['shops','sh_lamp',{kind:'decor',name:'Pendant lamp',group:'Lighting',price:150,stock:null,available:true}],
+    ['shops','sh_fern',{kind:'decor',name:'Potted fern',group:'Plants',price:60,stock:null,available:true}],
+    ['shops','sh_neon',{kind:'decor',name:'Neon open sign',group:'Signs',price:340,stock:5,available:true}],
+    ['shops','bp_brick',{kind:'blueprint',name:'Brick wall',group:'Wall',price:120,stock:null,available:true}],
+    ['shops','bp_glass',{kind:'blueprint',name:'Glass wall',group:'Wall',price:260,stock:null,available:true}],
+    ['shops','bp_door',{kind:'blueprint',name:'Wooden door',group:'Door',price:140,stock:null,available:true}],
+    ['shops','bp_double',{kind:'blueprint',name:'Double door',group:'Door',price:310,stock:null,available:true}],
+    ['shops','bp_bay',{kind:'blueprint',name:'Bay window',group:'Window',price:280,stock:2,available:true}],
+    ['boards','b_money',{title:'Richest players',source:'players',field:'money',dir:'desc'}],
+    ['boards','b_earn',{title:'Top earning stores today',source:'stores',field:'earnedToday',dir:'desc'}],
+    ['boards','b_rating',{title:'Best rated stores',source:'stores',field:'rating',dir:'desc'}],
+    ['boards','b_meals',{title:'Most meals served',source:'players',field:'Meals served',dir:'desc'}]
+  ];
+  for(var i=0;i<L.length;i++){if(!(await write(L[i][0],L[i][1],L[i][2],{merge:false})))return;}
+  toast('Sample data loaded');
+}
+
+/* ---------- boot ---------- */
+var cfgOk=!!(firebaseConfig&&firebaseConfig.apiKey&&String(firebaseConfig.apiKey).indexOf('PASTE')!==0);
+function flatten(o,p,out){
+  Object.keys(o).forEach(function(k){
+    var v=o[k],key=p?p+'.'+k:k;
+    if(v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length){flatten(v,key,out);}else{out[key]=v;}
+  });
+  return out;
+}
+render();
+if(!cfgOk){
+  S.noDb=true;S.setup=true;schedule();
+}else{
+  var app=initializeApp(firebaseConfig);
+  var fdb=getFirestore(app);
+  var auth=getAuth(app);
+  db={
+    collection:function(name){
+      var ref=collection(fdb,name);
+      return {
+        onSnapshot:function(next,err){
+          return onSnapshot(ref,function(snap){
+            next({docs:snap.docs.map(function(d){return {id:d.id,data:function(){return d.data();}};}),metadata:snap.metadata});
+          },function(e){if(err)err(e);});
+        },
+        doc:function(id){var r=id?doc(ref,id):doc(ref);return {id:r.id};}
+      };
+    },
+    doc:function(path){
+      var r=doc(fdb,path);
+      return {
+        set:function(d){return setDoc(r,d);},
+        update:function(d){return updateDoc(r,flatten(d,'',{}));},
+        delete:function(){return deleteDoc(r);}
+      };
+    }
+  };
+  S.signIn=function(){return signInWithPopup(auth,new GoogleAuthProvider()).catch(function(){toast('Sign-in did not finish.','bad');});};
+  S.signOut=function(){return signOut(auth);};
+  onAuthStateChanged(auth,function(u){
+    S.signedIn=!!u;
+    if(!u){S.owner=false;schedule();return;}
+    /* The database rules decide who may write; this probe asks them. */
+    setDoc(doc(fdb,'meta','owner-check'),{at:Date.now()}).then(function(){
+      S.owner=true;maybeRoll();schedule();
+    }).catch(function(){
+      S.owner=false;toast('This account is not allowed to edit this site.','bad');schedule();
+    });
+  });
+  COLLS.forEach(listen);
+  schedule();
+}
+})();
+</script>
+
+</body>
+</html>
