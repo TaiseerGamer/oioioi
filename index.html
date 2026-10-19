@@ -10,7 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Layout: awning stripe + masthead, event ribbon, summary strip.
-   Viewers get ONE long dashboard with a sticky jump bar. The owner in admin mode gets one tab per section. */
+   Viewers get two tabs: a one-page Dashboard (with a sticky jump bar) and Shops.
+   The owner in admin mode gets one tab per section. */
 :root{
   --bg:#eef1ec; --surface:#fbfcfa; --surface2:#e5eae3; --ink:#16201b; --muted:#56665c; --line:#d3dbd1; --link:#8da398;
   --accent:#0b7a68; --accent-ink:#ffffff; --coin:#9a5a00;
@@ -75,12 +76,16 @@ h1{font:800 clamp(26px,5vw,38px)/1.05 var(--f-display);letter-spacing:-.02em;mar
 .summary>div{background:var(--surface);padding:12px 14px;min-width:0}
 .summary dt{font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
 .summary dd{margin:3px 0 0;font:600 20px var(--f-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:18px;scrollbar-width:thin}
-.tabs.jump{position:sticky;top:0;z-index:5;background:var(--bg)}
+.navwrap{margin-bottom:18px}
+.navwrap.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg)}
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:thin}
 .tab{border:0;border-bottom:3px solid transparent;background:none;color:var(--muted);font:600 14px var(--f-body);padding:11px 14px;min-height:44px;white-space:nowrap;cursor:pointer}
 .tab[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+.jumpbar{display:flex;gap:6px;overflow-x:auto;padding:8px 0 4px;scrollbar-width:thin}
+.jchip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:600 12px var(--f-body);padding:6px 12px;border-radius:99px;min-height:32px;cursor:pointer;white-space:nowrap}
+.jchip:hover{color:var(--ink);border-color:var(--muted)}
 .panel{min-width:0}
-.sec{margin-bottom:36px;scroll-margin-top:60px;min-width:0}
+.sec{margin-bottom:36px;scroll-margin-top:120px;min-width:0}
 .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
 .bar h2{font:800 20px var(--f-display);margin:0;letter-spacing:-.01em}
 .bar .hint{color:var(--muted);font-size:13px;margin:2px 0 0}
@@ -93,6 +98,7 @@ h1{font:800 clamp(26px,5vw,38px)/1.05 var(--f-display);letter-spacing:-.02em;mar
 .btn.danger{color:var(--bad);border-color:var(--bad)}
 .btn.armed{background:var(--bad);color:var(--on-bad);border-color:var(--bad)}
 .btn.ico{padding:6px 10px;min-width:36px}
+.btn.sm{padding:5px 10px;min-height:30px;font-size:12px}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .who{display:flex;gap:12px;align-items:center;flex:1 1 200px;min-width:0}
 .whotxt{min-width:0}
@@ -105,13 +111,14 @@ h1{font:800 clamp(26px,5vw,38px)/1.05 var(--f-display);letter-spacing:-.02em;mar
 .num{font:600 16px var(--f-mono);font-variant-numeric:tabular-nums}
 .coin{color:var(--coin)}
 .faint{color:var(--muted);font-size:13px}
+p.faint{margin:0}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{display:inline-flex;gap:7px;align-items:baseline;padding:3px 10px;border-radius:99px;background:var(--surface2);font-size:12px}
 .chip b{font:600 12px var(--f-mono);font-variant-numeric:tabular-nums}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px;align-content:start;min-width:0}
 .card h3{margin:0;font:600 17px var(--f-body);overflow-wrap:anywhere}
 .card .meta{margin:2px 0 0;color:var(--muted);font-size:12px}
-.card.done,.card.expired,.card.ended{opacity:.72}
+.card.fin,.card.ended{opacity:.78}
 .card-top{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
 .card-acts{display:flex;gap:6px;flex-wrap:wrap}
 .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
@@ -119,6 +126,7 @@ h1{font:800 clamp(26px,5vw,38px)/1.05 var(--f-display);letter-spacing:-.02em;mar
 .inwrap{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--bg);overflow:hidden;max-width:100%}
 .inwrap .pre{padding:0 0 0 9px;color:var(--coin);font:600 14px var(--f-mono)}
 .qin{width:100%;min-width:70px;max-width:130px;border:0;background:none;color:var(--ink);font:600 15px var(--f-mono);padding:7px 9px;min-height:34px}
+.qin.small{min-width:56px;max-width:84px;min-height:30px;padding:4px 8px;font-size:14px}
 .qin:focus-visible{outline-offset:-2px}
 .track{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden}
 .track>i{display:block;height:100%;background:var(--accent);border-radius:99px}
@@ -148,6 +156,12 @@ h1{font:800 clamp(26px,5vw,38px)/1.05 var(--f-display);letter-spacing:-.02em;mar
 .tag.good{color:var(--good)}
 .strike{text-decoration:line-through;color:var(--muted);font:500 13px var(--f-mono)}
 .mult{font:600 11px var(--f-mono);padding:1px 6px;border-radius:5px;background:var(--coin);color:var(--bg);vertical-align:middle}
+.menu{display:grid;gap:6px}
+.mi{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.mi .mn{flex:1 1 120px;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.mi .mn small{display:block;font:500 11px var(--f-body);color:var(--muted)}
+.mi .mp{font:600 14px var(--f-mono);color:var(--coin)}
+.mi .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .board ol{list-style:none;margin:0;padding:0;display:grid;gap:9px}
 .board li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:2px 10px;align-items:center}
 .board .rk{font:600 13px var(--f-mono);color:var(--muted);text-align:right}
@@ -157,13 +171,12 @@ h1{font:800 clamp(26px,5vw,38px)/1.05 var(--f-display);letter-spacing:-.02em;mar
 .board li:first-child .rk{color:var(--coin)}
 .pchip{border:1px solid var(--line);background:var(--bg);color:var(--muted);font:500 12px var(--f-body);padding:5px 11px;border-radius:99px;min-height:30px;cursor:pointer}
 .pchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-.dl-time{display:grid;gap:6px}
-.dl-time .line .num{font-size:18px}
-.dl-prog{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
-.dl-prog i{display:block;height:100%;background:var(--coin);border-radius:99px}
 .evrow{display:flex;gap:14px;align-items:center}
 .evbadge{font:800 22px var(--f-display);min-width:68px;text-align:center;padding:10px 8px;border-radius:10px;background:var(--surface2);color:var(--coin);flex:none;font-variant-numeric:tabular-nums}
 .evbadge.small{font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.tells{margin:0;font-size:12px;color:var(--muted)}
+.tells b{color:var(--ink)}
+.sl{margin:4px 0 0;padding-left:18px}
 .webwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:16px}
 .webwrap svg{display:block;min-width:600px;width:100%;height:auto}
 .web-l{stroke:var(--link);stroke-width:1.6}
@@ -184,7 +197,7 @@ select,.fld input,.search input,.itemrow input,.itemrow select{font:500 14px var
 .subtabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .scrim{position:fixed;inset:0;background:rgba(8,14,11,.58);display:grid;place-items:center;padding:16px;z-index:50}
 .sheet{width:min(100%,480px);max-height:92%;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:12px}
-.sheet h2{margin:0;font:800 20px var(--f-display)}
+.sheet h2{margin:0;font:800 20px var(--f-display);overflow-wrap:anywhere}
 .sheet p{margin:0}
 .fld{display:grid;gap:5px;font:600 12px var(--f-body);color:var(--muted)}
 .fld.chk{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:14px}
@@ -203,7 +216,7 @@ select,.fld input,.search input,.itemrow input,.itemrow select{font:500 14px var
   .cell{min-width:90px}
 }
 @media (prefers-reduced-motion:no-preference){
-  .track>i,.stackbar>span,.dl-prog i{transition:width .35s ease}
+  .track>i,.stackbar>span{transition:width .35s ease}
 }
 </style>
 </head>
@@ -220,7 +233,10 @@ select,.fld input,.search input,.itemrow input,.itemrow select{font:500 14px var
   <div id="adminbar" class="adminbar" hidden></div>
   <div id="ribbon" class="ribbon" hidden></div>
   <dl id="summary" class="summary"></dl>
-  <nav id="tabs" class="tabs" aria-label="Sections"></nav>
+  <div id="navwrap" class="navwrap">
+    <nav id="tabs" class="tabs" aria-label="Pages"></nav>
+    <nav id="jump" class="jumpbar" aria-label="Jump to a section" hidden></nav>
+  </div>
   <main id="panel" class="panel"></main>
   <footer id="foot" class="foot"></footer>
 </div>
@@ -241,20 +257,28 @@ var int=function(v){return Math.round(num(v)).toLocaleString();};
 var pad=function(n){return String(n).padStart(2,'0');};
 var now=function(){return Date.now();};
 var today=function(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+var uid=function(){return 'm'+Math.random().toString(36).slice(2,9);};
+var pick=function(a){return a[Math.floor(Math.random()*a.length)];};
 
 var COLLS=['players','friends','stores','shops','shopdefs','boards','quests','deliveries','events','meta'];
 var TABS=[['players','Players'],['network','Network'],['stores','Stores'],['customers','Customers'],['shops','Shops'],['deliveries','Deliveries'],['events','Events'],['leaderboard','Leaderboard'],['quests','Daily quests']];
-/* One-page dashboard order: what runs on a clock comes first. */
-var DASH=[['events','Events'],['deliveries','Deliveries'],['quests','Daily quests'],['stores','Stores'],['customers','Customers'],['leaderboard','Leaderboard'],['shops','Shops'],['players','Players'],['network','Network']];
-var S={players:[],friends:[],stores:[],shops:[],shopdefs:[],boards:[],quests:[],deliveries:[],events:[],meta:{},tab:'players',shopSel:'',q:'',owner:false,adminView:true,status:'connecting',saving:0,loaded:{},timeout:false,rolled:false,migrated:false,modal:null,dirty:false,noDb:false,sig:''};
+var VTABS=[['dash','Dashboard'],['shops','Shops']];
+/* Viewer dashboard order: what runs on a clock comes first. Shops have their own tab. */
+var DASH=[['events','Events'],['deliveries','Deliveries'],['quests','Daily quests'],['stores','Stores'],['customers','Customers'],['leaderboard','Leaderboard'],['players','Players'],['network','Network']];
+var S={players:[],friends:[],stores:[],shops:[],shopdefs:[],boards:[],quests:[],deliveries:[],events:[],meta:{},secrets:{},tab:'players',vtab:'dash',shopSel:'',q:'',owner:false,adminView:true,status:'connecting',saving:0,loaded:{},timeout:false,rolled:false,migrated:false,modal:null,dirty:false,noDb:false,sig:''};
 var db=null;
 try{var t0=localStorage.getItem('tcr-tab');if(t0&&TABS.some(function(t){return t[0]===t0;}))S.tab=t0;}catch(e){}
+try{var v0=localStorage.getItem('tcr-vtab');if(v0==='shops'||v0==='dash')S.vtab=v0;}catch(e){}
 
 var cur=function(){return (S.meta.settings&&S.meta.settings.currency)||'$';};
 var money=function(v){return cur()+int(v);};
-var boxPrice=function(){return num((S.meta.settings||{}).boxPrice,50);};
+var setting=function(k,d){var v=(S.meta.settings||{})[k];return (v===undefined||v===null||v==='')?d:num(v,d);};
+var fakeChance=function(){return Math.max(0,Math.min(100,setting('fakeChance',25)));};
+var fakePenalty=function(){return Math.max(0,setting('fakePenalty',100));};
+var catchBonus=function(){return Math.max(0,setting('catchBonus',50));};
+var restockPct=function(){return Math.max(0,setting('restockPct',100));};
 var ed=function(){return S.owner&&S.adminView;};
-var dash=function(){return !ed();};
+var viewer=function(){return !ed();};
 var byId=function(list,id){for(var i=0;i<list.length;i++){if(list[i].id===id)return list[i];}return null;};
 var ready=function(){return S.timeout||COLLS.every(function(c){return S.loaded[c];});};
 function getDoc(coll,id){var d=coll==='meta'?S.meta[id]:byId(S[coll],id);if(!d)return null;var c=Object.assign({},d);delete c.id;return c;}
@@ -279,13 +303,11 @@ function untilMidnight(){
 }
 function until(ms){return '<span class="num" data-until="'+num(ms)+'">'+fmtDur(num(ms)-now())+'</span>';}
 
-/* ---------- events and deliveries ---------- */
+/* ---------- events ---------- */
 function evState(e,t){return t<num(e.startsAt)?'upcoming':(t<num(e.endsAt)?'live':'ended');}
-function dlState(d,t){if(d.status==='done')return 'done';return t>=num(d.expiresAt)?'expired':'open';}
 function liveEvents(){var t=now();return S.events.filter(function(e){return evState(e,t)==='live';});}
 function multiplier(){var m=1;liveEvents().forEach(function(e){if(e.type==='multiplier')m=Math.max(m,num(e.value,1));});return m;}
 function discountFor(shopId){var p=0;liveEvents().forEach(function(e){if(e.type==='discount'&&(!e.shopId||e.shopId===shopId))p=Math.max(p,Math.min(100,num(e.value)));});return p;}
-function timeSig(){var t=now();return S.events.map(function(e){return evState(e,t).charAt(0);}).join('')+'|'+S.deliveries.map(function(d){return dlState(d,t).charAt(0);}).join('');}
 function rewardHtml(base){
   var m=multiplier();
   if(m>1)return '<span class="num coin">'+money(Math.round(num(base)*m))+'</span> <span class="mult">×'+esc(m)+'</span>';
@@ -294,7 +316,105 @@ function rewardHtml(base){
 function evEffect(e){
   if(e.type==='multiplier')return '×'+num(e.value,1)+' coins';
   if(e.type==='discount'){var sd=e.shopId?byId(shopDefs(),e.shopId):null;return num(e.value)+'% off '+(sd?sd.name:'every shop');}
+  if(e.type==='rush')return num(e.value)+' delivery orders';
   return '';
+}
+
+/* ---------- deliveries ---------- */
+var DL_OPEN={offered:1,accepted:1};
+function dlStatus(d){var s=d.status;if(s==='done')return 'delivered';if(!s||s==='open')return 'offered';return s;}
+function dlReleased(d,t){return !d.releaseAt||t>=num(d.releaseAt);}
+function isFake(id){return !!(S.owner&&S.secrets[id]&&S.secrets[id].fake);}
+function showFake(id){return ed()&&isFake(id);}
+function tellsOf(id){return (S.secrets[id]&&S.secrets[id].tells)||[];}
+function rushOrders(evId){return S.deliveries.filter(function(d){return d.rushId===evId;});}
+function timeSig(){
+  var t=now();
+  return S.events.map(function(e){return evState(e,t).charAt(0);}).join('')+'|'+S.deliveries.filter(function(d){return d.releaseAt;}).map(function(d){return dlReleased(d,t)?'r':'s';}).join('');
+}
+
+var FIRST=['Mira','Jonas','Layla','Omar','Sana','Theo','Zara','Ivo','Hana','Felix','Dina','Marcus','Yara','Leo','Nadia','Ben'];
+var LAST=['Hale','Okafor','Lindqvist','Park','Rahman','Moreau','Castillo','Novak','Haddad','Kowalski','Brandt','Silva'];
+var STREETS=['Maple St','Harbor Rd','Willow Lane','Station Ave','Cedar Court','Market Row','Orchard Way','Bell St'];
+var FALLBACK=[{name:'Ramen bowl',price:14},{name:'Iced tea',price:6},{name:'Chocolate cake',price:18},{name:'Club sandwich',price:11},{name:'Fruit salad',price:9},{name:'Cheese pizza',price:16}];
+var FAKE_ITEMS=['Quantum waffle','Golden spatula','Item_null','Mystery box (do not open)','Dragon soup','Free money bundle'];
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function corrupt(s){
+  var map={a:'@',e:'3',i:'1',o:'0',s:'$',t:'7'},out='',n=0;
+  for(var i=0;i<s.length;i++){var ch=s.charAt(i),m=map[ch.toLowerCase()];if(m&&(Math.random()<0.65||(n===0&&i===s.length-1))){out+=m;n++;}else{out+=ch;}}
+  if(!n)out=s+'#'+(1000+Math.floor(Math.random()*8999));
+  return out;
+}
+function menuItems(s){
+  var m=s.menu||{};
+  return Object.keys(m).map(function(k){return Object.assign({id:k},m[k]);}).sort(function(a,b){return (num(a.createdAt)-num(b.createdAt))||String(a.name).localeCompare(String(b.name));});
+}
+function findMenu(st,name){
+  var n=String(name).trim().toLowerCase(),its=menuItems(st);
+  for(var i=0;i<its.length;i++){if(String(its[i].name).trim().toLowerCase()===n)return its[i];}
+  return null;
+}
+function menuPool(stores){
+  var out=[],seen={};
+  (stores||S.stores).forEach(function(s){
+    var m=s.menu||{};
+    Object.keys(m).forEach(function(k){
+      var nm=String(m[k].name||'').trim().toLowerCase();
+      if(nm&&num(m[k].price)>0&&!seen[nm]){seen[nm]=1;out.push({name:m[k].name,price:num(m[k].price),itemId:k,storeId:s.id});}
+    });
+  });
+  return out;
+}
+function genOrder(fake,pool){
+  pool=(pool&&pool.length)?pool:FALLBACK.map(function(f){return {name:f.name,price:f.price,itemId:'',storeId:''};});
+  var lines=Math.min(pool.length,1+Math.floor(Math.random()*3));
+  var picks=shuffle(pool).slice(0,lines);
+  var items=picks.map(function(p){return {qty:1+Math.floor(Math.random()*4),name:p.name,itemId:p.itemId||'',storeId:p.storeId||''};});
+  var base=0;items.forEach(function(it,i){base+=it.qty*picks[i].price;});
+  var reward=Math.max(10,Math.round(base*1.2/5)*5);
+  var customer=pick(FIRST)+' '+pick(LAST);
+  var address=(1+Math.floor(Math.random()*98))+' '+pick(STREETS);
+  var tells=[];
+  if(fake){
+    var kinds=shuffle(['name','item','reward','address','qty']).slice(0,Math.random()<0.5?2:1);
+    kinds.forEach(function(k){
+      if(k==='name'){customer=corrupt(customer);tells.push('Garbled customer name');}
+      else if(k==='item'){var ix=Math.floor(Math.random()*items.length);items[ix]={qty:items[ix].qty,name:pick(FAKE_ITEMS),itemId:'',storeId:''};tells.push('An item no store sells');}
+      else if(k==='reward'){reward=Math.round(reward*(4+Math.random()*3)/10)*10;tells.push('Earning far too high');}
+      else if(k==='address'){address=pick(['','NULL','???','undefined']);tells.push('Missing or broken address');}
+      else if(k==='qty'){var jx=Math.floor(Math.random()*items.length);items[jx].qty=40+Math.floor(Math.random()*60);tells.push('Absurd quantity');}
+    });
+  }
+  return {customer:customer,address:address,items:items,reward:reward,fake:!!fake,tells:tells};
+}
+async function createOrder(fake,opts){
+  opts=opts||{};
+  var o=genOrder(fake,menuPool(opts.pool));
+  var id=db.collection('deliveries').doc().id;
+  var data={customer:o.customer,address:o.address,items:o.items,reward:o.reward,status:'offered',random:true,createdAt:now()};
+  if(opts.rushId){data.rushId=opts.rushId;data.releaseAt=opts.releaseAt;}
+  if(o.fake){if(!(await write('deliverysecrets',id,{fake:true,tells:o.tells},{merge:false})))return false;}
+  return await write('deliveries',id,data,{merge:false});
+}
+async function queueRush(evId,count,releaseAt,pool){
+  for(var i=0;i<count;i++){
+    var fake=Math.random()*100<fakeChance();
+    if(!(await createOrder(fake,{rushId:evId,releaseAt:releaseAt,pool:pool})))return false;
+  }
+  return true;
+}
+async function removeOrder(id){
+  await removeDoc('deliveries',id);
+  if(S.secrets[id])await removeDoc('deliverysecrets',id);
+}
+async function syncRush(id,ev){
+  var t=now(),all=rushOrders(id),i;
+  var untouched=all.every(function(d){return dlStatus(d)==='offered'&&!dlReleased(d,t);});
+  if(all.length&&!untouched){if(ev.type==='rush')toast('Orders that already dropped stay as they are.');return;}
+  for(i=0;i<all.length;i++)await removeOrder(all[i].id);
+  if(ev.type!=='rush')return;
+  var n=Math.max(1,Math.min(40,Math.round(num(ev.value,8))));
+  if(await queueRush(id,n,num(ev.startsAt)))toast(n+' rush orders queued');
 }
 
 /* ---------- shops ---------- */
@@ -329,6 +449,14 @@ function listen(coll){
     maybeRoll();maybeMigrate();
     schedule();
   },function(err){S.status='error';S.err=err&&err.code;schedule();});
+}
+var secretsOn=false;
+function listenSecrets(){
+  if(secretsOn)return;
+  secretsOn=true;
+  db.collection('deliverysecrets').onSnapshot(function(snap){
+    var m={};snap.docs.forEach(function(d){m[d.id]=d.data();});S.secrets=m;schedule();
+  },function(){});
 }
 var chains=new Map();
 function enqueue(key,fn){var prev=chains.get(key)||Promise.resolve();var next=prev.catch(function(){}).then(fn);chains.set(key,next);return next;}
@@ -376,6 +504,13 @@ async function afterDelete(coll,id){
     var evs=S.events.filter(function(x){return x.shopId===id;});
     for(i=0;i<evs.length;i++)await write('events',evs[i].id,{shopId:''});
   }
+  if(coll==='deliveries'){if(S.secrets[id])await removeDoc('deliverysecrets',id);}
+  if(coll==='events')await syncRush(id,{type:'deleted'});
+}
+async function clearFinished(){
+  var t=now(),fin=S.deliveries.filter(function(d){return dlReleased(d,t)&&!DL_OPEN[dlStatus(d)];});
+  for(var i=0;i<fin.length;i++)await removeOrder(fin[i].id);
+  toast('Cleared '+fin.length+' finished '+(fin.length===1?'order':'orders'));
 }
 
 /* ---------- daily rhythm ---------- */
@@ -393,15 +528,14 @@ var POOL=[
   {title:'Rearrange your layout',desc:'Change the layout of your store once.',target:1,reward:70},
   {title:'Fill every table',desc:'Have every table in your store occupied at once.',target:1,reward:160}
 ];
-function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 async function rollQuests(){
   S.rolled=true;
   var old=S.quests.slice(),i;
   for(i=0;i<old.length;i++)await removeDoc('quests',old[i].id);
-  var pick=shuffle(POOL).slice(0,4);
-  for(i=0;i<pick.length;i++){
+  var picks=shuffle(POOL).slice(0,4);
+  for(i=0;i<picks.length;i++){
     var id=db.collection('quests').doc().id;
-    await write('quests',id,{title:pick[i].title,desc:pick[i].desc,target:pick[i].target,reward:pick[i].reward,doneBy:[]},{merge:false});
+    await write('quests',id,{title:picks[i].title,desc:picks[i].desc,target:picks[i].target,reward:picks[i].reward,doneBy:[]},{merge:false});
   }
   await write('meta','day',{date:today()},{merge:false});
 }
@@ -439,10 +573,10 @@ function avatar(name){
 function numInput(coll,id,k,val,o){
   o=o||{};
   return '<span class="inwrap">'+(o.pre?'<span class="pre">'+esc(o.pre)+'</span>':'')+
-    '<input class="qin" type="number" inputmode="decimal" step="'+(o.step||'any')+'"'+(o.min!=null?' min="'+o.min+'"':'')+(o.max!=null?' max="'+o.max+'"':'')+
-    ' value="'+esc(num(val))+'" aria-label="'+esc(o.label||k)+'" data-qin="1" data-coll="'+esc(coll)+'" data-id="'+esc(id)+'" data-k="'+esc(k)+'"'+(o.sub?' data-sub="'+esc(o.sub)+'"':'')+'></span>';
+    '<input class="qin'+(o.small?' small':'')+'" type="number" inputmode="decimal" step="'+(o.step||'any')+'"'+(o.min!=null?' min="'+o.min+'"':'')+(o.max!=null?' max="'+o.max+'"':'')+
+    ' value="'+esc(num(val))+'" aria-label="'+esc(o.label||k)+'" data-qin="1" data-coll="'+esc(coll)+'" data-id="'+esc(id)+'" data-k="'+esc(k)+'"'+(o.sub?' data-sub="'+esc(o.sub)+'"':'')+(o.sub2?' data-sub2="'+esc(o.sub2)+'"':'')+'></span>';
 }
-function empty(title,text,btn){return '<div class="empty'+(dash()?' slim':'')+'"><b>'+esc(title)+'</b>'+(text?'<p>'+esc(text)+'</p>':'')+(btn||'')+'</div>';}
+function empty(title,text,btn){return '<div class="empty'+(viewer()?' slim':'')+'"><b>'+esc(title)+'</b>'+(text?'<p>'+esc(text)+'</p>':'')+(btn||'')+'</div>';}
 function addBtn(coll,label,extra){return '<button class="btn primary" data-act="add" data-coll="'+coll+'"'+(extra||'')+'>'+esc(label)+'</button>';}
 function head(title,hint,act){return '<div class="bar"><div><h2>'+esc(title)+'</h2>'+(hint?'<p class="hint">'+hint+'</p>':'')+'</div>'+(act?'<div class="baract">'+act+'</div>':'')+'</div>';}
 
@@ -454,9 +588,11 @@ function render(){
   var ab=$('#adminbar');setHtml(ab,adminBar());ab.hidden=!S.owner;
   var rb=$('#ribbon'),rh=ready()?ribbon():'';setHtml(rb,rh);rb.hidden=!rh;
   setHtml($('#summary'),summary());
-  var tb=$('#tabs');tb.className='tabs'+(dash()?' jump':'');
-  setHtml(tb,dash()?jumpHtml():tabsHtml());
-  setHtml($('#panel'),dash()?dashboard():panel());
+  var v=viewer();
+  $('#navwrap').className='navwrap'+(v?' sticky':'');
+  setHtml($('#tabs'),v?vtabsHtml():tabsHtml());
+  var jb=$('#jump'),jh=(v&&S.vtab==='dash')?jumpHtml():'';setHtml(jb,jh);jb.hidden=!jh;
+  setHtml($('#panel'),v?(S.vtab==='shops'?viewerShops():dashboard()):panel());
   setHtml($('#foot'),S.noDb?'':(S.owner?'<button data-act="signout">Sign out</button>':(S.signedIn?'<span>This account cannot edit.</span><button data-act="signout">Sign out</button>':'<button data-act="signin">Owner sign in</button>')));
 }
 function mastRight(){
@@ -466,8 +602,8 @@ function mastRight(){
 }
 function adminBar(){
   if(!S.owner)return '';
-  if(!S.adminView)return '<p>You are previewing the <b>one-page viewer dashboard</b> exactly as other people see it.</p><button class="btn primary" data-act="mode" data-mode="admin">Back to admin</button>';
-  return '<p><b>Admin panel.</b> Only you can change anything here. Everyone else sees one read-only dashboard, updated the moment you save.</p>'+
+  if(!S.adminView)return '<p>You are previewing the <b>viewer site</b> exactly as other people see it.</p><button class="btn primary" data-act="mode" data-mode="admin">Back to admin</button>';
+  return '<p><b>Admin panel.</b> Only you can change anything here. Everyone else sees a read-only site, updated the moment you save.</p>'+
     (ready()&&S.players.length+S.stores.length+S.shops.length+S.shopdefs.length===0?'<button class="btn primary" data-act="seed">Load sample data</button>':'')+
     '<button class="btn" data-act="settings">Game settings</button>'+
     '<button class="btn" data-act="roll" data-arm="Click again to roll quests">Roll quests</button>'+
@@ -477,7 +613,7 @@ function summary(){
   var total=S.players.reduce(function(a,p){return a+num(p.money);},0);
   var earned=S.stores.reduce(function(a,s){return a+num(s.earnedToday);},0);
   var cust=num((S.meta.customers||{}).total);
-  var t=now(),open=S.deliveries.filter(function(d){return dlState(d,t)==='open';}).length;
+  var t=now(),open=S.deliveries.filter(function(d){return dlReleased(d,t)&&DL_OPEN[dlStatus(d)];}).length;
   function it(l,v,c){return '<div><dt>'+l+'</dt><dd class="'+(c||'')+'">'+esc(v)+'</dd></div>';}
   return it('Players',int(S.players.length))+it('Money in play',money(total),'coin')+it('Earned today',money(earned),'coin')+it('Customers today',int(cust))+it('Open deliveries',int(open));
 }
@@ -494,8 +630,11 @@ function ribbon(){
 function tabsHtml(){
   return TABS.map(function(t){return '<button class="tab" data-act="tab" data-tab="'+t[0]+'"'+(S.tab===t[0]?' aria-current="page"':'')+'>'+t[1]+'</button>';}).join('');
 }
+function vtabsHtml(){
+  return VTABS.map(function(t){return '<button class="tab" data-act="vtab" data-v="'+t[0]+'"'+(S.vtab===t[0]?' aria-current="page"':'')+'>'+t[1]+'</button>';}).join('');
+}
 function jumpHtml(){
-  return DASH.map(function(t){return '<button class="tab" data-act="jump" data-sec="'+t[0]+'">'+t[1]+'</button>';}).join('');
+  return DASH.map(function(t){return '<button class="jchip" data-act="jump" data-sec="'+t[0]+'">'+t[1]+'</button>';}).join('');
 }
 var PANELS={players:playersPanel,network:networkPanel,stores:storesPanel,customers:customersPanel,shops:shopsPanel,deliveries:deliveriesPanel,events:eventsPanel,leaderboard:leaderboardPanel,quests:questsPanel};
 function panelBase(){
@@ -509,6 +648,7 @@ function dashboard(){
   var b=panelBase();if(b)return b;
   return DASH.map(function(s){return '<section class="sec" id="sec-'+s[0]+'">'+PANELS[s[0]]()+'</section>';}).join('');
 }
+function viewerShops(){var b=panelBase();if(b)return b;return '<section class="sec" id="sec-shops">'+shopsPanel()+'</section>';}
 
 /* players */
 function playersPanel(){
@@ -573,20 +713,42 @@ function webSvg(){
   return '<svg viewBox="0 0 720 450" role="img" aria-label="Network of players and their connections">'+lines+nodes+'</svg>';
 }
 
-/* stores */
+/* stores and menus */
 function storesPanel(){
   var e=ed();
-  var h=head('Stores','Today’s numbers for every store',e?addBtn('stores','Add store'):'');
-  if(!S.stores.length)return h+empty('No stores yet.',e?'Add a store to track what it earns today.':'Stores will appear here once the owner adds them.',e?addBtn('stores','Add store'):'');
+  var h=head('Stores',e?'Today’s numbers and each store’s menu':'Today’s numbers and what each store sells',e?addBtn('stores','Add store'):'');
+  if(!S.stores.length)return h+empty('No stores yet.',e?'Add a store to track what it earns and what it sells.':'Stores will appear here once the owner adds them.',e?addBtn('stores','Add store'):'');
   var list=S.stores.slice().sort(function(a,b){return num(b.earnedToday)-num(a.earnedToday);});
   return h+'<div class="grid">'+list.map(storeCard).join('')+'</div>';
+}
+function unitCost(it){return Math.max(0,Math.round(num(it.value)*restockPct()/100));}
+function stockTag(it){
+  var st=num(it.stock);
+  if(st<=0)return '<span class="tag bad">Out of stock</span>';
+  if(st<=5)return '<span class="tag warn">'+int(st)+' left</span>';
+  return '<span class="tag">'+int(st)+' in stock</span>';
+}
+function menuHtml(s){
+  var e=ed(),items=menuItems(s);
+  var h='<div class="menu"><div class="line"><span class="lbl">Menu</span>'+(e?'<button class="btn sm" data-act="addmenu" data-store="'+esc(s.id)+'">Add menu item</button>':'')+'</div>';
+  if(!items.length)return h+'<p class="faint">'+(e?'No menu yet. Add the items this store sells.':'This store has not posted a menu yet.')+'</p></div>';
+  h+=items.map(function(it){
+    if(!e)return '<div class="mi"><span class="mn">'+esc(it.name)+'</span><span class="mp">'+money(it.price)+'</span>'+stockTag(it)+'</div>';
+    var lr=it.lastRestock&&now()-num(it.lastRestock.at)<86400000?'<span class="tag good">+'+int(it.lastRestock.qty)+' restocked</span>':'';
+    return '<div class="mi"><span class="mn">'+esc(it.name)+'<small>Value '+money(it.value)+' · restock '+money(unitCost(it))+' each</small></span><span class="mp">'+money(it.price)+'</span>'+lr+
+      '<span class="acts">'+numInput('stores',s.id,'menu',it.stock,{sub:it.id,sub2:'stock',min:0,small:true,label:'Stock of '+it.name+' at '+s.name})+
+      '<button class="btn sm" data-act="restock" data-store="'+esc(s.id)+'" data-item="'+esc(it.id)+'">Restock</button>'+
+      '<button class="btn sm" data-act="editmenu" data-store="'+esc(s.id)+'" data-item="'+esc(it.id)+'">Edit</button></span></div>';
+  }).join('');
+  return h+'</div>';
 }
 function storeCard(s){
   var e=ed(),o=byId(S.players,s.ownerId),r=Math.max(0,Math.min(5,num(s.rating)));
   return '<article class="card"><div class="card-top"><div><h3>'+esc(s.name)+'</h3><p class="meta">Owner: '+(o?esc(o.name):'Unassigned')+'</p></div>'+(e?'<button class="btn" data-act="edit" data-coll="stores" data-id="'+esc(s.id)+'">Edit</button>':'')+'</div>'+
     '<div class="metrics"><div class="cell"><span class="lbl">Money earned today</span>'+(e?numInput('stores',s.id,'earnedToday',s.earnedToday,{pre:cur(),label:'Money earned today at '+s.name}):'<span class="num coin">'+money(s.earnedToday)+'</span>')+'</div>'+
     '<div class="cell"><span class="lbl">Customers served</span>'+(e?numInput('stores',s.id,'served',s.served,{label:'Customers served at '+s.name}):'<span class="num">'+int(s.served)+'</span>')+'</div>'+
-    '<div class="cell full"><span class="lbl">Rating</span><div class="rate">'+(e?numInput('stores',s.id,'rating',s.rating,{step:'0.1',min:0,max:5,label:'Rating of '+s.name}):'<span class="num">'+r.toFixed(1)+'</span>')+'<div class="track" role="img" aria-label="Rating '+r.toFixed(1)+' out of 5"><i style="width:'+(r/5*100)+'%"></i></div></div></div></div></article>';
+    '<div class="cell full"><span class="lbl">Rating</span><div class="rate">'+(e?numInput('stores',s.id,'rating',s.rating,{step:'0.1',min:0,max:5,label:'Rating of '+s.name}):'<span class="num">'+r.toFixed(1)+'</span>')+'<div class="track" role="img" aria-label="Rating '+r.toFixed(1)+' out of 5"><i style="width:'+(r/5*100)+'%"></i></div></div></div></div>'+
+    menuHtml(s)+'</article>';
 }
 
 /* customers */
@@ -610,7 +772,7 @@ function customersPanel(){
   return h;
 }
 
-/* shops */
+/* shops (no stock, no restock: items are always for sale) */
 function shopsPanel(){
   var e=ed(),defs=shopDefs();
   if(!e){
@@ -618,7 +780,7 @@ function shopsPanel(){
     defs.forEach(function(sd){var items=shopItems(sd.id,false);if(!items.length)return;any=true;h+=shopBlock(sd,items);});
     return any?h:h+empty('Nothing for sale right now.','Check back soon.');
   }
-  var h2=head('Shops','Boxes cost '+money(boxPrice())+' each. A box adds the item’s units per box to its stock.',addBtn('shopdefs','Add shop'));
+  var h2=head('Shops','Everything in a shop is always available. Stores restock from their own menus in the Stores tab.',addBtn('shopdefs','Add shop'));
   if(!defs.length)return h2+empty('No shops yet.','Create a shop (Furniture shop, Blueprint shop, anything you like), then add items to it.',addBtn('shopdefs','Add shop'));
   var sel=selShop(),sd=byId(defs,sel);
   h2+='<div class="bar"><div class="subtabs" role="group" aria-label="Shops">'+defs.map(function(d){return '<button data-act="shopsel" data-shop="'+esc(d.id)+'" aria-pressed="'+(d.id===sel)+'">'+esc(d.name)+'</button>';}).join('')+'</div>'+
@@ -640,46 +802,64 @@ function shopGroups(sd,items){
   return h;
 }
 function itemCard(i){
-  var e=ed(),limited=i.stock!=null&&i.stock!=='',st=num(i.stock),out=limited&&st<=0;
-  var pct=discountFor(itemShopId(i));
+  var e=ed(),pct=discountFor(itemShopId(i));
   var price=pct>0?'<span class="num coin">'+money(Math.round(num(i.price)*(100-pct)/100))+'</span> <span class="strike">'+money(i.price)+'</span>':'<span class="num coin">'+money(i.price)+'</span>';
-  var stockTag=!limited?'<span class="tag">Unlimited</span>':(out?'<span class="tag bad">Sold out</span>':'<span class="tag'+(st<=3?' warn':'')+'">'+int(st)+' left</span>');
-  var lr=i.lastRestock&&now()-num(i.lastRestock.at)<86400000?'<span class="tag good">Restocked '+int(i.lastRestock.boxes)+(num(i.lastRestock.boxes)===1?' box':' boxes')+'</span>':'';
   return '<article class="item'+(i.available===false?' hidden':'')+'"><div class="line"><h4>'+esc(i.name)+'</h4><span>'+price+'</span></div>'+
-    '<div class="line"><span class="chips">'+stockTag+lr+(i.available===false?'<span class="tag">Hidden from viewers</span>':'')+'</span></div>'+
-    (e?'<div class="card-acts">'+(limited?'<button class="btn'+(out?' primary':'')+'" data-act="restock" data-id="'+esc(i.id)+'">Restock</button>':'')+'<button class="btn" data-act="edit" data-coll="shops" data-id="'+esc(i.id)+'">Edit</button></div>':'')+'</article>';
+    (i.available===false?'<div class="line"><span class="tag">Hidden from viewers</span></div>':'')+
+    (e?'<div class="card-acts"><button class="btn" data-act="edit" data-coll="shops" data-id="'+esc(i.id)+'">Edit</button></div>':'')+'</article>';
 }
 
 /* deliveries */
 function deliveriesPanel(){
   var e=ed(),t=now();
-  var list=S.deliveries.map(function(d){return {d:d,s:dlState(d,t)};});
-  var open=list.filter(function(x){return x.s==='open';}).sort(function(a,b){return num(a.d.expiresAt)-num(b.d.expiresAt);});
-  var closed=list.filter(function(x){return x.s!=='open';}).sort(function(a,b){return num(b.d.completedAt||b.d.expiresAt)-num(a.d.completedAt||a.d.expiresAt);}).slice(0,6);
-  var h=head('Deliveries',open.length+(open.length===1?' open order':' open orders'),e?addBtn('deliveries','New delivery'):'');
-  if(!list.length)return h+empty('No deliveries yet.',e?'Create an order: pick items from your shops, set a time limit and the earning.':'Delivery orders will appear here.',e?addBtn('deliveries','New delivery'):'');
-  h+=open.length?'<div class="grid">'+open.map(function(x){return deliveryCard(x.d,x.s);}).join('')+'</div>':empty('No open deliveries.','');
-  if(closed.length)h+='<div class="group">Recent</div><div class="grid">'+closed.map(function(x){return deliveryCard(x.d,x.s);}).join('')+'</div>';
+  var vis=S.deliveries.filter(function(d){return dlReleased(d,t);});
+  var sched=S.deliveries.filter(function(d){return !dlReleased(d,t);});
+  var waiting=vis.filter(function(d){return dlStatus(d)==='offered';}).sort(function(a,b){return num(a.createdAt)-num(b.createdAt);});
+  var going=vis.filter(function(d){return dlStatus(d)==='accepted';}).sort(function(a,b){return num(a.acceptedAt)-num(b.acceptedAt);});
+  var allFin=vis.filter(function(d){return !DL_OPEN[dlStatus(d)];}).sort(function(a,b){return num(b.completedAt)-num(a.completedAt);});
+  var fin=allFin.slice(0,8);
+  var act=e?addBtn('deliveries','New delivery')+'<button class="btn" data-act="random">Random delivery</button>'+(allFin.length?'<button class="btn danger" data-act="clearfin" data-arm="Click again to clear">Clear finished</button>':''):'';
+  var h=head('Deliveries',waiting.length+' waiting · '+going.length+' in progress · check each order before you accept it',act);
+  if(e&&sched.length){
+    var groups={};sched.forEach(function(d){var k=d.rushId||'x';(groups[k]=groups[k]||{n:0,at:num(d.releaseAt),id:d.rushId}).n++;});
+    h+='<div class="group">Queued rush orders</div><div class="stack">'+Object.keys(groups).map(function(k){
+      var g=groups[k],ev=byId(S.events,g.id);
+      return '<div class="rib"><span class="pill">Queued</span><b>'+esc(ev?ev.title:'Delivery Rush')+'</b><span class="fx">'+g.n+' orders</span><span class="rt">they drop in '+until(g.at)+'</span></div>';
+    }).join('')+'</div>';
+  }
+  if(!S.deliveries.length)return h+empty('No deliveries yet.',e?'Create an order yourself, roll a random one, or schedule a Delivery Rush event.':'Delivery orders will appear here.',e?addBtn('deliveries','New delivery'):'');
+  if(waiting.length)h+='<div class="group">Waiting for a store</div><div class="grid">'+waiting.map(deliveryCard).join('')+'</div>';
+  if(going.length)h+='<div class="group">In progress</div><div class="grid">'+going.map(deliveryCard).join('')+'</div>';
+  if(!waiting.length&&!going.length)h+=empty('No open orders right now.','');
+  if(fin.length)h+='<div class="group">Finished</div><div class="grid">'+fin.map(deliveryCard).join('')+'</div>';
   return h;
 }
-function deliveryCard(d,s){
-  var e=ed();
+function deliveryCard(d){
+  var e=ed(),s=dlStatus(d),fake=showFake(d.id);
+  var st=d.storeId?byId(S.stores,d.storeId):null,who=d.acceptedBy?byId(S.players,d.acceptedBy):null;
   var items=(d.items||[]).map(function(it){return '<span class="chip"><b>'+int(it.qty)+'×</b><span>'+esc(it.name)+'</span></span>';}).join('');
-  var pill=s==='open'?'<span class="pill hot">Open</span>':(s==='done'?'<span class="pill ok">Delivered</span>':'<span class="pill no">Expired</span>');
-  var who=d.deliveredBy?byId(S.players,d.deliveredBy):null;
-  var time='';
-  if(s==='open'){
-    time='<div class="dl-time"><div class="line"><span class="lbl">Time left</span>'+until(d.expiresAt)+'</div><div class="dl-prog" data-from="'+num(d.createdAt)+'" data-until="'+num(d.expiresAt)+'"><i style="width:'+Math.max(0,Math.min(100,(num(d.expiresAt)-now())/Math.max(1,num(d.expiresAt)-num(d.createdAt))*100))+'%"></i></div></div>';
-  }else if(s==='done'){
-    time='<p class="faint">Delivered'+(who?' by '+esc(who.name):'')+(num(d.paid)>0?' · paid '+money(d.paid):'')+'</p>';
-  }else{
-    time='<p class="faint">Time ran out '+esc(fmtWhen(d.expiresAt))+'</p>';
+  var pill={offered:'<span class="pill hot">Waiting</span>',accepted:'<span class="pill">Accepted</span>',delivered:'<span class="pill ok">Delivered</span>',scam:'<span class="pill no">Fake order</span>',declined:d.verdict==='fake'?'<span class="pill ok">Caught a fake</span>':'<span class="pill">Declined</span>'}[s]||'<span class="pill">'+esc(s)+'</span>';
+  var addr=d.address?'<p class="meta">Deliver to <b>'+esc(d.address)+'</b></p>':(d.random?'<p class="meta">No address given</p>':'');
+  var whoTxt=who?esc(who.name):'a player',stTxt=st?esc(st.name):'a store';
+  var state='';
+  if(s==='offered')state='<p class="faint">Waiting for a store to accept or decline.</p>';
+  else if(s==='accepted')state='<p class="faint">Accepted by '+whoTxt+(st?' for '+stTxt:'')+'.</p>';
+  else if(s==='delivered')state='<p class="faint">Delivered'+(who?' by '+whoTxt:'')+(st?' from '+stTxt:'')+(num(d.paid)>0?' · paid '+money(d.paid):'')+'.</p>';
+  else if(s==='scam')state='<p class="faint">It was a fake order. '+(who?whoTxt+' lost '+money(d.penalty)+'.':'Nobody was paid.')+'</p>';
+  else if(s==='declined')state='<p class="faint">Declined'+(who||d.declinedBy?'':'')+'. '+(d.verdict==='fake'?'It was a fake order'+(num(d.bonus)>0?', and a '+money(d.bonus)+' bonus was paid for catching it.':'.'):'It was a real order.')+'</p>';
+  var tells='';
+  if((s==='scam'||(s==='declined'&&d.verdict==='fake'))&&(d.tells||[]).length)tells='<p class="tells"><b>Giveaways:</b> '+esc(d.tells.join(', '))+'.</p>';
+  var adminFake=fake&&DL_OPEN[s]?'<div><span class="tag bad">Fake · only you can see this</span>'+(tellsOf(d.id).length?'<p class="tells">'+esc(tellsOf(d.id).join(', '))+'</p>':'')+'</div>':'';
+  var earn=s==='delivered'?'<span class="num coin">'+money(d.paid>0?d.paid:d.reward)+'</span>':(s==='scam'||s==='declined'?'<span class="num faint">'+money(d.reward)+'</span>':rewardHtml(d.reward));
+  var acts='';
+  if(e){
+    if(s==='offered')acts='<button class="btn primary" data-act="accept" data-id="'+esc(d.id)+'">Accept</button><button class="btn" data-act="decline" data-id="'+esc(d.id)+'">Decline</button>';
+    else if(s==='accepted')acts='<button class="btn primary" data-act="deliver" data-id="'+esc(d.id)+'">Delivered</button>';
+    acts='<div class="card-acts">'+acts+'<button class="btn" data-act="edit" data-coll="deliveries" data-id="'+esc(d.id)+'">Edit</button></div>';
   }
-  var earn=s==='done'&&d.paid!=null?'<span class="num coin">'+money(d.reward)+'</span>':rewardHtml(d.reward);
-  return '<article class="card '+s+'"><div class="card-top"><div><h3>'+esc(d.customer)+'</h3><p class="meta">Limit '+int(d.limitMin)+' min</p></div>'+pill+'</div>'+
+  return '<article class="card'+(DL_OPEN[s]?'':' fin')+'"><div class="card-top"><div><h3>'+esc(d.customer)+'</h3>'+addr+'</div>'+pill+'</div>'+
     '<div class="chips">'+(items||'<span class="faint">No items</span>')+'</div>'+
-    '<div class="line"><span class="lbl">Earning</span>'+earn+'</div>'+time+
-    (e?'<div class="card-acts">'+(s==='open'?'<button class="btn primary" data-act="deliver" data-id="'+esc(d.id)+'">Delivered</button>':'')+'<button class="btn" data-act="edit" data-coll="deliveries" data-id="'+esc(d.id)+'">Edit</button></div>':'')+'</article>';
+    '<div class="line"><span class="lbl">Earning</span>'+earn+'</div>'+state+tells+adminFake+acts+'</article>';
 }
 
 /* events */
@@ -689,7 +869,7 @@ function eventsPanel(){
   var up=S.events.filter(function(x){return evState(x,t)==='upcoming';}).sort(function(a,b){return num(a.startsAt)-num(b.startsAt);});
   var ended=e?S.events.filter(function(x){return evState(x,t)==='ended';}).sort(function(a,b){return num(b.endsAt)-num(a.endsAt);}).slice(0,6):[];
   var h=head('Events',live.length+' live · '+up.length+' upcoming',e?addBtn('events','Add event'):'');
-  if(!live.length&&!up.length&&!ended.length)return h+empty('No events scheduled.',e?'Schedule double coins, a discount, or any event you like.':'Nothing is planned right now. Check back soon.',e?addBtn('events','Add event'):'');
+  if(!live.length&&!up.length&&!ended.length)return h+empty('No events scheduled.',e?'Schedule double coins, a discount, a Delivery Rush, or any event you like.':'Nothing is planned right now. Check back soon.',e?addBtn('events','Add event'):'');
   if(live.length)h+='<div class="group">Live now</div><div class="grid">'+live.map(function(x){return eventCard(x,'live');}).join('')+'</div>';
   if(up.length)h+='<div class="group">Coming up</div><div class="grid">'+up.map(function(x){return eventCard(x,'upcoming');}).join('')+'</div>';
   if(!live.length&&!up.length)h+=empty('Nothing live or coming up.','');
@@ -697,11 +877,18 @@ function eventsPanel(){
   return h;
 }
 function eventCard(ev,s){
-  var e=ed();
-  var badge=ev.type==='multiplier'?'<div class="evbadge">×'+esc(num(ev.value,1))+'</div>':(ev.type==='discount'?'<div class="evbadge">−'+esc(num(ev.value))+'%</div>':'<div class="evbadge small">Event</div>');
+  var e=ed(),t=now();
+  var badge=ev.type==='multiplier'?'<div class="evbadge">×'+esc(num(ev.value,1))+'</div>':(ev.type==='discount'?'<div class="evbadge">−'+esc(num(ev.value))+'%</div>':(ev.type==='rush'?'<div class="evbadge small">Rush</div>':'<div class="evbadge small">Event</div>'));
   var clock=s==='live'?'<span class="pill hot">Live</span> ends in '+until(ev.endsAt):(s==='upcoming'?'<span class="pill">Soon</span> starts in '+until(ev.startsAt):'<span class="pill">Ended</span>');
+  var rs='';
+  if(ev.type==='rush'){
+    var all=rushOrders(ev.id),rel=all.filter(function(r){return dlReleased(r,t);}),wait=rel.filter(function(r){return dlStatus(r)==='offered';}).length;
+    if(s==='upcoming')rs='<p class="faint">'+int(ev.value)+' orders drop all at once when this starts. Any store can take them.</p>';
+    else if(s==='live')rs='<p class="faint">'+wait+' of '+rel.length+' rush orders still waiting for a store.</p>';
+    else rs='<p class="faint">'+rel.length+' orders dropped during this rush.</p>';
+  }
   return '<article class="card '+s+'"><div class="evrow">'+badge+'<div style="min-width:0"><h3>'+esc(ev.title)+'</h3><p class="meta">'+esc(evEffect(ev))+'</p></div></div>'+
-    (ev.desc?'<p class="faint">'+esc(ev.desc)+'</p>':'')+
+    (ev.desc?'<p class="faint">'+esc(ev.desc)+'</p>':'')+rs+
     '<div class="line"><span class="faint">'+clock+'</span></div>'+
     '<p class="meta">'+esc(fmtWhen(ev.startsAt))+' to '+esc(fmtWhen(ev.endsAt))+'</p>'+
     (e?'<div class="card-acts"><button class="btn" data-act="edit" data-coll="events" data-id="'+esc(ev.id)+'">Edit</button></div>':'')+'</article>';
@@ -756,6 +943,8 @@ function questCard(q){
 }
 
 /* ---------- editor modal ---------- */
+var EV_LABEL={multiplier:'Earnings multiplier (2 = double coins)',discount:'Discount percent (20 = 20% off)',rush:'Number of orders to drop (1 to 40)'};
+var EV_DEFAULT={multiplier:2,discount:20,rush:8};
 var SCHEMAS={
   players:{noun:'player',del:true,fields:[
     {k:'name',label:'Name',t:'text',req:true,max:40},
@@ -775,20 +964,18 @@ var SCHEMAS={
     {k:'name',label:'Name',t:'text',req:true,max:48},
     {k:'group',label:'Category (Wall, Door, Chair…)',t:'text',max:30,list:'groups'},
     {k:'price',label:'Price',t:'number',min:0},
-    {k:'stock',label:'Stock (leave empty for unlimited)',t:'number',min:0,optional:true},
-    {k:'perBox',label:'Units in one restock box',t:'number',min:1},
     {k:'available',label:'Visible to viewers',t:'check'}]},
   deliveries:{noun:'delivery',del:true,fields:[
     {k:'customer',label:'Customer',t:'text',req:true,max:40},
+    {k:'address',label:'Deliver to (optional)',t:'text',max:60},
     {k:'items',label:'Items to deliver',t:'items'},
-    {k:'limitMin',label:'Time limit (minutes)',t:'number',min:1},
     {k:'reward',label:'Earning',t:'number',min:0},
-    {k:'_restart',label:'Restart the timer from now',t:'check',def:false,editOnly:true}]},
+    {k:'_fake',label:'This is a fake order (only you can see this)',t:'check',def:false}]},
   events:{noun:'event',del:true,fields:[
     {k:'title',label:'Event name',t:'text',req:true,max:48},
-    {k:'type',label:'Type',t:'select',opts:function(){return [['multiplier','Bonus earnings (double coins…)'],['discount','Discount'],['other','Other event']];}},
-    {k:'value',label:'Value (2 = double coins, 20 = 20% off)',t:'number',min:0},
-    {k:'shopId',label:'Discount applies to',t:'select',opts:function(){return [['','Every shop']].concat(shopDefs().map(function(d){return [d.id,d.name];}));}},
+    {k:'type',label:'Type',t:'select',opts:function(){return [['multiplier','Bonus earnings (double coins…)'],['discount','Discount'],['rush','Delivery Rush (many orders at once)'],['other','Other event']];}},
+    {k:'value',label:'Value',t:'number',min:0,show:['multiplier','discount','rush']},
+    {k:'shopId',label:'Discount applies to',t:'select',show:['discount'],opts:function(){return [['','Every shop']].concat(shopDefs().map(function(d){return [d.id,d.name];}));}},
     {k:'desc',label:'Short description',t:'text',max:120},
     {k:'startsAt',label:'Starts',t:'datetime'},
     {k:'endsAt',label:'Ends',t:'datetime'}]},
@@ -805,7 +992,10 @@ var SCHEMAS={
   settings:{noun:'game settings',title:'Game settings',coll:'meta',id:'settings',fields:[
     {k:'gameName',label:'Game name',t:'text',max:40},
     {k:'currency',label:'Currency symbol',t:'text',max:3},
-    {k:'boxPrice',label:'Price of one restock box',t:'number',min:0}]}
+    {k:'restockPct',label:'Restock price (% of the item’s value)',t:'number',min:0},
+    {k:'fakeChance',label:'Chance a random delivery is fake (%)',t:'number',min:0,max:100},
+    {k:'fakePenalty',label:'Penalty for accepting a fake order',t:'number',min:0},
+    {k:'catchBonus',label:'Bonus for declining a fake order',t:'number',min:0}]}
 };
 function defaults(key,preset){
   var h=nextHour();
@@ -813,12 +1003,12 @@ function defaults(key,preset){
     players:{name:'',money:0,stats:{}},
     stores:{name:'',ownerId:'',earnedToday:0,served:0,rating:4},
     shopdefs:{name:'',desc:''},
-    shops:{shopId:selShop(),name:'',group:'',price:0,stock:20,perBox:10,available:true},
-    deliveries:{customer:'',items:[],limitMin:30,reward:100},
+    shops:{shopId:selShop(),name:'',group:'',price:0,available:true},
+    deliveries:{customer:'',address:'',items:[],reward:100},
     events:{title:'',type:'multiplier',value:2,shopId:'',desc:'',startsAt:h,endsAt:h+7200000},
     boards:{title:'',source:'players',field:'money',dir:'desc'},
     quests:{title:'',desc:'',target:1,reward:100,doneBy:[]},
-    settings:{gameName:'',currency:'$',boxPrice:50}
+    settings:{gameName:'',currency:'$',restockPct:100,fakeChance:25,fakePenalty:100,catchBonus:50}
   }[key];
   return Object.assign({},d,preset||{});
 }
@@ -827,24 +1017,31 @@ function statRow(k,v){
 }
 function itemRow(it){
   it=it||{};
-  var opts='<option value="">Custom item</option>'+shopDefs().map(function(sd){
+  var sel='';
+  if(it.storeId&&it.itemId){var s0=byId(S.stores,it.storeId);if(s0&&(s0.menu||{})[it.itemId])sel='store:'+it.storeId+':'+it.itemId;}
+  else if(it.itemId&&byId(S.shops,it.itemId))sel='shop:'+it.itemId;
+  var groups='';
+  S.stores.forEach(function(s){
+    var its=menuItems(s);
+    if(its.length)groups+='<optgroup label="'+esc(s.name)+' menu">'+its.map(function(m){var v='store:'+s.id+':'+m.id;return '<option value="'+esc(v)+'"'+(v===sel?' selected':'')+'>'+esc(m.name)+'</option>';}).join('')+'</optgroup>';
+  });
+  shopDefs().forEach(function(sd){
     var its=S.shops.filter(function(i){return itemShopId(i)===sd.id;});
-    return its.length?'<optgroup label="'+esc(sd.name)+'">'+its.map(function(i){return '<option value="'+esc(i.id)+'"'+(it.itemId===i.id?' selected':'')+'>'+esc(i.name)+'</option>';}).join('')+'</optgroup>':'';
-  }).join('');
-  var isShop=!!(it.itemId&&byId(S.shops,it.itemId));
-  return '<div class="itemrow"><input class="iq" type="number" min="1" step="1" value="'+esc(it.qty||1)+'" aria-label="Quantity"><select class="is" aria-label="Item">'+opts+'</select><button type="button" class="btn ico" data-act="rmitem" aria-label="Remove item">×</button>'+
-    '<input class="in" type="text" maxlength="40" placeholder="Custom item name" aria-label="Custom item name" value="'+esc(isShop?'':(it.name||''))+'"'+(isShop?' hidden':'')+'></div>';
+    if(its.length)groups+='<optgroup label="'+esc(sd.name)+'">'+its.map(function(i){var v='shop:'+i.id;return '<option value="'+esc(v)+'"'+(v===sel?' selected':'')+'>'+esc(i.name)+'</option>';}).join('')+'</optgroup>';
+  });
+  return '<div class="itemrow"><input class="iq" type="number" min="1" step="1" value="'+esc(it.qty||1)+'" aria-label="Quantity"><select class="is" aria-label="Item"><option value="">Custom item</option>'+groups+'</select><button type="button" class="btn ico" data-act="rmitem" aria-label="Remove item">×</button>'+
+    '<input class="in" type="text" maxlength="40" placeholder="Custom item name" aria-label="Custom item name" value="'+esc(sel?'':(it.name||''))+'"'+(sel?' hidden':'')+'></div>';
 }
 function optsHtml(list,sel){return list.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(sel)?' selected':'')+'>'+esc(o[1])+'</option>';}).join('');}
 function fieldHtml(f,c){
-  var v=c[f.k],id='f_'+f.k;
+  var v=c[f.k],id='f_'+f.k,fa=f.show?' data-for="'+f.show.join(' ')+'"':'';
   if(f.t==='text'){
     var dl='';
     if(f.list==='groups'){var gs={};S.shops.forEach(function(i){if(i.group)gs[i.group]=1;});dl='<datalist id="dl_groups">'+Object.keys(gs).map(function(g){return '<option value="'+esc(g)+'">';}).join('')+'</datalist>';}
     return '<label class="fld"><span>'+esc(f.label)+'</span><input id="'+id+'" name="'+f.k+'" type="text" value="'+esc(v)+'"'+(f.req?' required':'')+(f.max?' maxlength="'+f.max+'"':'')+(f.list?' list="dl_'+f.list+'"':'')+'></label>'+dl;
   }
-  if(f.t==='number')return '<label class="fld"><span>'+esc(f.label)+'</span><input id="'+id+'" name="'+f.k+'" type="number" inputmode="decimal" step="'+(f.step||'any')+'"'+(f.min!=null?' min="'+f.min+'"':'')+(f.max!=null?' max="'+f.max+'"':'')+' value="'+(v==null?'':esc(v))+'"'+(f.optional?' placeholder="Unlimited"':'')+'></label>';
-  if(f.t==='select')return '<label class="fld"><span>'+esc(f.label)+'</span><select id="'+id+'" name="'+f.k+'">'+optsHtml(f.opts(),v)+'</select></label>';
+  if(f.t==='number')return '<label class="fld"'+fa+'><span>'+esc(f.label)+'</span><input id="'+id+'" name="'+f.k+'" type="number" inputmode="decimal" step="'+(f.step||'any')+'"'+(f.min!=null?' min="'+f.min+'"':'')+(f.max!=null?' max="'+f.max+'"':'')+' value="'+(v==null?'':esc(v))+'"'+(f.optional?' placeholder="Unlimited"':'')+'></label>';
+  if(f.t==='select')return '<label class="fld"'+fa+'><span>'+esc(f.label)+'</span><select id="'+id+'" name="'+f.k+'">'+optsHtml(f.opts(),v)+'</select></label>';
   if(f.t==='boardfield')return '<label class="fld"><span>'+esc(f.label)+'</span><select id="'+id+'" name="'+f.k+'">'+optsHtml(fieldOptions(c.source),v)+'</select></label>';
   if(f.t==='datetime')return '<label class="fld"><span>'+esc(f.label)+'</span><input id="'+id+'" name="'+f.k+'" type="datetime-local" required value="'+esc(toLocalInput(num(v,now())))+'"></label>';
   if(f.t==='check'){var on=v===undefined?f.def!==false:v!==false&&!!v;return '<label class="fld chk"><input id="'+id+'" name="'+f.k+'" type="checkbox"'+(on?' checked':'')+'><span>'+esc(f.label)+'</span></label>';}
@@ -859,74 +1056,196 @@ function fieldHtml(f,c){
   }
   return '';
 }
+function syncEventForm(changed){
+  var ty=$('#f_type');if(!ty)return;
+  var t=ty.value;
+  document.querySelectorAll('#mform [data-for]').forEach(function(l){l.hidden=l.dataset.for.split(' ').indexOf(t)<0;});
+  var vl=$('#f_value');
+  if(vl){
+    var span=vl.parentNode.querySelector('span');if(span)span.textContent=EV_LABEL[t]||'Value';
+    if(changed&&EV_DEFAULT[t]!==undefined)vl.value=EV_DEFAULT[t];
+  }
+}
 var lastFocus=null;
 function showModal(html){
   lastFocus=document.activeElement;
   var m=$('#modal');m.innerHTML=html;m.hidden=false;
-  var first=m.querySelector('input:not([type=checkbox]),select');if(first)first.focus();
+  var first=m.querySelector('input:not([type=checkbox]):not([hidden]),select');if(first)first.focus();
 }
 function openModal(key,id,preset){
   var sc=SCHEMAS[key],coll=sc.coll||key,docId=sc.id||id||null;
   var existing=docId?getDoc(coll,docId):null;
   var c=existing?Object.assign(defaults(key),existing):defaults(key,preset);
   if(key==='shops')c.shopId=itemShopId(c);
+  if(key==='deliveries')c._fake=docId?isFake(docId):false;
   S.modal={key:key,coll:coll,id:docId,isNew:!existing};
   var title=sc.title||((existing?'Edit ':'Add ')+sc.noun);
   showModal('<form class="sheet" id="mform" autocomplete="off" role="dialog" aria-modal="true" aria-label="'+esc(title)+'"><h2>'+esc(title)+'</h2>'+
-    sc.fields.filter(function(f){return !(f.editOnly&&!existing);}).map(function(f){return fieldHtml(f,c);}).join('')+
+    sc.fields.map(function(f){return fieldHtml(f,c);}).join('')+
     '<div class="sheet-acts">'+(existing&&sc.del?'<button type="button" class="btn danger" data-act="del" data-arm="Click again to delete">Delete</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">Save</button></div></form>');
+  if(key==='events')syncEventForm(false);
 }
-function openCustom(key,id,title,body,submitLabel){
-  S.modal={key:key,id:id,custom:true};
+function openCustom(key,id,title,body,submitLabel,extraBtns,meta){
+  S.modal=Object.assign({key:key,id:id,custom:true},meta||{});
   showModal('<form class="sheet" id="mform" autocomplete="off" role="dialog" aria-modal="true" aria-label="'+esc(title)+'"><h2>'+esc(title)+'</h2>'+body+
-    '<div class="sheet-acts"><span class="sp"></span><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">'+esc(submitLabel)+'</button></div></form>');
+    '<div class="sheet-acts">'+(extraBtns||'')+'<span class="sp"></span><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">'+esc(submitLabel)+'</button></div></form>');
 }
 function playerOpts(first){return '<option value="">'+esc(first)+'</option>'+S.players.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+' ('+esc(money(p.money))+')</option>';}).join('');}
-function openRestock(id){
-  var it=byId(S.shops,id);if(!it)return;
-  var per=Math.max(1,num(it.perBox,10));
-  openCustom('restock',id,'Restock '+it.name,
-    '<p class="faint">'+esc(it.name)+' has '+int(it.stock)+' in stock. One box adds '+int(per)+' units and costs '+esc(money(boxPrice()))+'.</p>'+
-    '<label class="fld"><span>Boxes to buy</span><input id="rs_boxes" name="boxes" type="number" min="1" step="1" value="1" required></label>'+
+
+/* menu item */
+function openMenuItem(storeId,itemId){
+  var st=byId(S.stores,storeId);if(!st)return;
+  var it=itemId?(st.menu||{})[itemId]:null;
+  var c=it||{name:'',price:10,value:5,stock:0};
+  openCustom('menuitem',storeId,(it?'Edit item at ':'Add item to ')+st.name,
+    '<label class="fld"><span>Item name</span><input id="mi_name" name="name" type="text" maxlength="40" required value="'+esc(c.name)+'"></label>'+
+    '<label class="fld"><span>Menu price (what customers pay)</span><input id="mi_price" name="price" type="number" min="0" step="any" value="'+esc(c.price)+'"></label>'+
+    '<label class="fld"><span>Item value (restock price is based on this)</span><input id="mi_value" name="value" type="number" min="0" step="any" value="'+esc(c.value)+'"></label>'+
+    '<label class="fld"><span>Units in stock</span><input id="mi_stock" name="stock" type="number" min="0" step="1" value="'+esc(c.stock)+'"></label>',
+    'Save',it?'<button type="button" class="btn danger" data-act="delmenu" data-arm="Click again to delete">Delete</button>':'',{itemId:itemId||null});
+}
+async function deleteMenuItem(){
+  var md=S.modal;if(!md||md.key!=='menuitem'||!md.itemId)return;
+  var st=byId(S.stores,md.id);closeModal();if(!st)return;
+  var menu=Object.assign({},st.menu||{});delete menu[md.itemId];
+  var d=getDoc('stores',st.id);d.menu=menu;
+  if(await write('stores',st.id,d,{merge:false}))toast('Item removed from the menu');
+}
+
+/* restock (stores, priced from item value) */
+function openRestock(storeId,itemId){
+  var st=byId(S.stores,storeId);if(!st)return;
+  var it=(st.menu||{})[itemId];if(!it)return;
+  openCustom('restock',storeId,'Restock '+it.name,
+    '<p class="faint">'+esc(st.name)+' has '+int(it.stock)+' of '+esc(it.name)+'. One unit costs '+esc(money(unitCost(it)))+' ('+int(restockPct())+'% of its '+esc(money(it.value))+' value).</p>'+
+    '<label class="fld"><span>Units to buy</span><input id="rs_qty" name="qty" type="number" min="1" step="1" value="10" required></label>'+
     '<label class="fld"><span>Paid by</span><select id="rs_payer" name="payer">'+playerOpts('The house (no player is charged)')+'</select></label>'+
-    '<p id="rs_prev" class="faint"></p>','Buy boxes');
+    '<p id="rs_prev" class="faint"></p>','Buy units','',{itemId:itemId});
+  var pay=$('#rs_payer');if(pay&&st.ownerId&&byId(S.players,st.ownerId))pay.value=st.ownerId;
   updateRestockPreview();
 }
 function updateRestockPreview(){
   var md=S.modal;if(!md||md.key!=='restock')return;
-  var it=byId(S.shops,md.id),el=$('#rs_prev');if(!it||!el)return;
-  var boxes=Math.max(1,Math.floor(num($('#rs_boxes').value,1))),per=Math.max(1,num(it.perBox,10));
-  el.textContent='Cost '+money(boxes*boxPrice())+' · adds '+int(boxes*per)+' units · stock becomes '+int(num(it.stock)+boxes*per);
+  var st=byId(S.stores,md.id),it=st&&(st.menu||{})[md.itemId],el=$('#rs_prev');if(!it||!el)return;
+  var q=Math.max(1,Math.floor(num($('#rs_qty').value,1)));
+  el.textContent='Cost '+money(q*unitCost(it))+' · stock becomes '+int(num(it.stock)+q);
+}
+
+/* deliveries: accept, decline, deliver */
+function stockCheckHtml(d,st){
+  if(!st)return '<p class="faint">No store picked, so no stock will change.</p>';
+  var lines=(d.items||[]).map(function(it){
+    var m=findMenu(st,it.name);
+    if(!m)return '<li>'+esc(it.name)+': not on '+esc(st.name)+'’s menu</li>';
+    var have=num(m.stock),need=num(it.qty);
+    return '<li>'+esc(it.name)+': '+(have>=need?'has '+int(have)+', needs '+int(need):'<b>short</b>, has '+int(have)+', needs '+int(need))+'</li>';
+  }).join('');
+  return '<div class="faint"><b>Stock at '+esc(st.name)+'</b><ul class="sl">'+lines+'</ul></div>';
+}
+function openAccept(id){
+  var d=byId(S.deliveries,id);if(!d)return;
+  var opts='<option value="">No store</option>'+S.stores.map(function(s){return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';}).join('');
+  openCustom('accept',id,'Accept order from '+d.customer,
+    '<label class="fld"><span>Store taking the order</span><select id="ac_store" name="store">'+opts+'</select></label>'+
+    '<label class="fld"><span>Accepted by</span><select id="ac_payer" name="payer">'+playerOpts('Nobody in particular')+'</select></label>'+
+    '<div id="ac_stock"></div>','Accept order');
+  var sel=$('#ac_store');if(S.stores[0])sel.value=S.stores[0].id;
+  syncAccept();
+}
+function syncAccept(){
+  var md=S.modal;if(!md||md.key!=='accept')return;
+  var st=byId(S.stores,$('#ac_store').value);
+  if(st&&st.ownerId&&byId(S.players,st.ownerId))$('#ac_payer').value=st.ownerId;
+  $('#ac_stock').innerHTML=stockCheckHtml(byId(S.deliveries,md.id),st);
+}
+function openDecline(id){
+  var d=byId(S.deliveries,id);if(!d)return;
+  var fake=isFake(id);
+  openCustom('decline',id,'Decline order from '+d.customer,
+    '<p class="faint">'+(fake?'<b>This is a fake order.</b> A player who declines it earns a '+esc(money(catchBonus()))+' bonus.':'This is a real order. Declining it means the earning is forfeited.')+'</p>'+
+    '<label class="fld"><span>Declined by</span><select name="payer">'+playerOpts('Nobody in particular')+'</select></label>'+
+    (fake?'<label class="fld chk"><input name="pay" type="checkbox" checked><span>Pay the bonus to that player</span></label>':''),'Decline order');
 }
 function openDeliver(id){
   var d=byId(S.deliveries,id);if(!d)return;
-  var amount=Math.round(num(d.reward)*multiplier());
-  openCustom('deliver',id,'Delivered to '+d.customer,
-    '<p class="faint">Earning: '+esc(money(amount))+(multiplier()>1?' (includes the live ×'+esc(multiplier())+' bonus)':'')+'.</p>'+
-    '<label class="fld"><span>Delivered by</span><select name="payer">'+playerOpts('Nobody in particular')+'</select></label>'+
-    '<label class="fld chk"><input name="pay" type="checkbox" checked><span>Add the earning to that player’s money</span></label>','Mark delivered');
+  var fake=isFake(id),amount=Math.round(num(d.reward)*multiplier());
+  var st=d.storeId?byId(S.stores,d.storeId):null;
+  var body='';
+  if(fake)body+='<p class="faint"><b>This was a fake order.</b> Nothing is earned and the player loses '+esc(money(fakePenalty()))+' (or everything they have, if that is less).</p>';
+  else body+='<p class="faint">Earning: '+esc(money(amount))+(multiplier()>1?' (includes the live ×'+esc(multiplier())+' bonus)':'')+'.'+(st?' Stock at '+esc(st.name)+' drops for items on its menu.':'')+'</p>';
+  if(!d.acceptedBy||!byId(S.players,d.acceptedBy))body+='<label class="fld"><span>Delivered by</span><select name="payer">'+playerOpts('Nobody in particular')+'</select></label>';
+  if(!fake)body+='<label class="fld chk"><input name="pay" type="checkbox" checked><span>Add the earning to the player’s money</span></label>';
+  openCustom('deliver',id,(fake?'Fake order from ':'Delivered to ')+d.customer,body,fake?'Confirm':'Mark delivered');
 }
 var CUSTOM={
-  restock:function(form,md){
-    var it=byId(S.shops,md.id);if(!it)return null;
-    var boxes=Math.max(1,Math.floor(num(form.elements.namedItem('boxes').value,1)));
-    var payer=form.elements.namedItem('payer').value,cost=boxes*boxPrice(),per=Math.max(1,num(it.perBox,10));
-    var p=payer?byId(S.players,payer):null;
-    if(payer&&!p)return null;
-    if(p&&num(p.money)<cost){toast(p.name+' has '+money(p.money)+'. These boxes cost '+money(cost)+'.','bad');return null;}
+  menuitem:function(form,md){
+    var st=byId(S.stores,md.id);if(!st)return null;
+    var name=form.elements.namedItem('name').value.trim();
+    if(!name){toast('Give the item a name first.','bad');return null;}
+    var price=Math.max(0,num(form.elements.namedItem('price').value)),value=Math.max(0,num(form.elements.namedItem('value').value)),stock=Math.max(0,Math.floor(num(form.elements.namedItem('stock').value)));
+    var menu=Object.assign({},st.menu||{}),iid=md.itemId||uid(),prev=menu[iid]||{};
+    menu[iid]=Object.assign({},prev,{name:name,price:price,value:value,stock:stock,createdAt:prev.createdAt||now()});
     return async function(){
-      var ok=await write('shops',it.id,{stock:num(it.stock)+boxes*per,lastRestock:{boxes:boxes,at:now()}});
-      if(ok&&p)ok=await write('players',p.id,{money:num(p.money)-cost});
-      if(ok)toast('Bought '+boxes+(boxes===1?' box':' boxes')+' for '+money(cost));
+      var d=getDoc('stores',st.id);d.menu=menu;
+      if(await write('stores',st.id,d,{merge:false}))toast('Menu saved');
+    };
+  },
+  restock:function(form,md){
+    var st=byId(S.stores,md.id),it=st&&(st.menu||{})[md.itemId];if(!it)return null;
+    var qty=Math.max(1,Math.floor(num(form.elements.namedItem('qty').value,1)));
+    var pid=form.elements.namedItem('payer').value,cost=qty*unitCost(it),p=pid?byId(S.players,pid):null;
+    if(pid&&!p)return null;
+    if(p&&num(p.money)<cost){toast(p.name+' has '+money(p.money)+'. This restock costs '+money(cost)+'.','bad');return null;}
+    return async function(){
+      var patch={menu:{}};patch.menu[md.itemId]={stock:num(it.stock)+qty,lastRestock:{qty:qty,at:now()}};
+      var ok=await write('stores',st.id,patch);
+      if(ok&&p&&cost>0)ok=await write('players',p.id,{money:num(p.money)-cost});
+      if(ok)toast('Restocked '+qty+' '+it.name+(cost>0?' for '+money(cost):''));
+    };
+  },
+  accept:function(form,md){
+    var d=byId(S.deliveries,md.id);if(!d)return null;
+    var sid=form.elements.namedItem('store').value,pid=form.elements.namedItem('payer').value;
+    return async function(){
+      if(await write('deliveries',d.id,{status:'accepted',storeId:sid,acceptedBy:pid,acceptedAt:now()}))toast('Order accepted');
+    };
+  },
+  decline:function(form,md){
+    var d=byId(S.deliveries,md.id);if(!d)return null;
+    var fake=isFake(d.id),pid=form.elements.namedItem('payer').value,p=pid?byId(S.players,pid):null;
+    var payEl=form.elements.namedItem('pay'),pay=payEl?payEl.checked:false;
+    var bonus=(fake&&p&&pay)?catchBonus():0;
+    return async function(){
+      var data={status:'declined',verdict:fake?'fake':'real',completedAt:now(),declinedBy:p?p.id:'',bonus:bonus};
+      if(fake)data.tells=tellsOf(d.id);
+      var ok=await write('deliveries',d.id,data);
+      if(ok&&bonus>0)await write('players',p.id,{money:num(p.money)+bonus});
+      if(ok)toast(fake?'Fake order caught':'Order declined');
     };
   },
   deliver:function(form,md){
     var d=byId(S.deliveries,md.id);if(!d)return null;
-    var pid=form.elements.namedItem('payer').value,pay=form.elements.namedItem('pay').checked,p=pid?byId(S.players,pid):null;
+    var fake=isFake(d.id),pidEl=form.elements.namedItem('payer');
+    var pid=pidEl?pidEl.value:d.acceptedBy,p=pid?byId(S.players,pid):null;
+    var st=d.storeId?byId(S.stores,d.storeId):null;
+    var payEl=form.elements.namedItem('pay'),pay=payEl?payEl.checked:true;
     var amount=Math.round(num(d.reward)*multiplier());
     return async function(){
-      var ok=await write('deliveries',d.id,{status:'done',completedAt:now(),deliveredBy:p?p.id:'',paid:(p&&pay)?amount:0});
-      if(ok&&p&&pay)await write('players',p.id,{money:num(p.money)+amount});
+      var ok;
+      if(fake){
+        var pen=p?Math.min(Math.max(0,num(p.money)),fakePenalty()):0;
+        ok=await write('deliveries',d.id,{status:'scam',verdict:'fake',completedAt:now(),acceptedBy:p?p.id:'',penalty:pen,paid:0,tells:tellsOf(d.id)});
+        if(ok&&pen>0)await write('players',p.id,{money:num(p.money)-pen});
+        if(ok)toast('It was a fake order');
+        return;
+      }
+      ok=await write('deliveries',d.id,{status:'delivered',verdict:'real',completedAt:now(),acceptedBy:p?p.id:'',paid:(p&&pay)?amount:0});
+      if(ok&&p&&pay)ok=await write('players',p.id,{money:num(p.money)+amount});
+      if(ok&&st){
+        var left={},touched=false;
+        (d.items||[]).forEach(function(it){var m=findMenu(st,it.name);if(m){var have=left[m.id]!==undefined?left[m.id]:num(m.stock);left[m.id]=Math.max(0,have-num(it.qty));touched=true;}});
+        if(touched){var mp={menu:{}};Object.keys(left).forEach(function(k){mp.menu[k]={stock:left[k]};});await write('stores',st.id,mp);}
+      }
       if(ok)toast('Delivery completed');
     };
   }
@@ -942,9 +1261,7 @@ async function submitModal(ev){
   if(md.custom){var run=CUSTOM[md.key](form,md);if(!run)return;closeModal();await run();return;}
   var sc=SCHEMAS[md.key],data={},i;
   for(i=0;i<sc.fields.length;i++){
-    var f=sc.fields[i];
-    if(f.editOnly&&md.isNew)continue;
-    var el=form.elements.namedItem(f.k);
+    var f=sc.fields[i],el=form.elements.namedItem(f.k);
     if(f.t==='stats'){
       var st={};
       form.querySelectorAll('.statrow').forEach(function(r){var k=r.querySelector('.sk').value.trim();if(k)st[k]=num(r.querySelector('.sv').value);});
@@ -952,9 +1269,11 @@ async function submitModal(ev){
     }else if(f.t==='items'){
       var items=[];
       form.querySelectorAll('.itemrow').forEach(function(r){
-        var qty=Math.max(1,Math.floor(num(r.querySelector('.iq').value,1))),sel=r.querySelector('.is').value,shopItem=sel?byId(S.shops,sel):null;
-        var name=shopItem?shopItem.name:r.querySelector('.in').value.trim();
-        if(name)items.push({qty:qty,name:name,itemId:shopItem?shopItem.id:''});
+        var qty=Math.max(1,Math.floor(num(r.querySelector('.iq').value,1))),sel=r.querySelector('.is').value,name='',itemId='',storeId='';
+        if(sel.indexOf('store:')===0){var parts=sel.split(':'),s1=byId(S.stores,parts[1]),mi=s1&&(s1.menu||{})[parts[2]];if(mi){name=mi.name;itemId=parts[2];storeId=parts[1];}}
+        else if(sel.indexOf('shop:')===0){var si=byId(S.shops,sel.slice(5));if(si){name=si.name;itemId=si.id;}}
+        if(!name)name=r.querySelector('.in').value.trim();
+        if(name)items.push({qty:qty,name:name,itemId:itemId,storeId:storeId});
       });
       if(!items.length){toast('Add at least one item to deliver.','bad');return;}
       data.items=items;
@@ -975,19 +1294,31 @@ async function submitModal(ev){
   var id=md.id||db.collection(md.coll).doc().id;
   var old=getDoc(md.coll,id)||{};
   if(md.key==='settings'){if(!data.gameName)data.gameName='Your game';if(!data.currency)data.currency='$';}
-  if(md.key==='events'&&data.endsAt<=data.startsAt){toast('The event has to end after it starts.','bad');return;}
+  if(md.key==='events'){
+    if(data.endsAt<=data.startsAt){toast('The event has to end after it starts.','bad');return;}
+    if(data.type!=='discount')data.shopId='';
+    if(data.type==='other')data.value=0;
+    if(data.type==='rush')data.value=Math.max(1,Math.min(40,Math.round(data.value||8)));
+  }
   if(md.key==='shops'&&!data.shopId){toast('Create a shop first.','bad');return;}
-  if(md.key==='shops'&&data.perBox<1)data.perBox=1;
   if(md.key==='shopdefs')data.createdAt=old.createdAt||now();
+  var fk=false;
   if(md.key==='deliveries'){
-    var restart=!!data._restart;delete data._restart;
-    data.createdAt=(old.createdAt&&!restart)?old.createdAt:now();
-    data.expiresAt=data.createdAt+Math.max(1,data.limitMin)*60000;
-    data.status=old.status||'open';
+    fk=!!data._fake;delete data._fake;
+    if(!old.createdAt)data.createdAt=now();
+    data.status=old.status||'offered';
   }
   closeModal();
   var ok=await write(md.coll,id,Object.assign({},old,data),{merge:false});
-  if(ok){toast('Saved');if(md.key==='shopdefs'&&!S.shopSel)S.shopSel=id;}
+  if(!ok)return;
+  if(md.key==='deliveries'){
+    var was=isFake(id);
+    if(fk&&!was)await write('deliverysecrets',id,{fake:true,tells:['Marked as fake by you']},{merge:false});
+    if(!fk&&was)await removeDoc('deliverysecrets',id);
+  }
+  if(md.key==='events')await syncRush(id,Object.assign({},old,data));
+  toast('Saved');
+  if(md.key==='shopdefs'&&!S.shopSel)S.shopSel=id;
 }
 async function deleteCurrent(){
   var md=S.modal;if(!md||!md.id)return;
@@ -998,46 +1329,61 @@ async function deleteCurrent(){
 /* ---------- sample data ---------- */
 async function seedSample(){
   var t=now(),H=3600000,M=60000;
+  var stores=[
+    {id:'s_nora',name:'Noodle Bar (sample)',ownerId:'p_nora',earnedToday:1840,served:62,rating:4.6,menu:{
+      m_ramen:{name:'Ramen bowl',price:14,value:6,stock:30,createdAt:1},m_gyoza:{name:'Gyoza',price:8,value:3,stock:4,createdAt:2},m_tea:{name:'Iced tea',price:5,value:2,stock:0,createdAt:3}}},
+    {id:'s_kade',name:'Corner Cafe (sample)',ownerId:'p_kade',earnedToday:920,served:31,rating:4.1,menu:{
+      m_latte:{name:'Latte',price:6,value:2,stock:25,createdAt:1},m_sand:{name:'Club sandwich',price:11,value:5,stock:12,createdAt:2}}},
+    {id:'s_ines',name:'Bakehouse (sample)',ownerId:'p_ines',earnedToday:2310,served:77,rating:4.8,menu:{
+      m_cake:{name:'Chocolate cake',price:18,value:8,stock:9,createdAt:1},m_bread:{name:'Sourdough loaf',price:9,value:3,stock:20,createdAt:2},m_cookie:{name:'Cookie',price:3,value:1,stock:60,createdAt:3}}}
+  ];
   var L=[
-    ['meta','settings',{gameName:'My Tycoon Game',currency:'$',boxPrice:50}],
+    ['meta','settings',{gameName:'My Tycoon Game',currency:'$',restockPct:100,fakeChance:25,fakePenalty:100,catchBonus:50}],
     ['meta','customers',{total:240,alloc:{s_nora:80,s_kade:55,s_ines:90}}],
     ['players','p_nora',{name:'Nora (sample)',money:12450,stats:{'Meals served':340,'Days played':21}}],
     ['players','p_kade',{name:'Kade (sample)',money:8200,stats:{'Meals served':210,'Days played':14}}],
     ['players','p_ines',{name:'Ines (sample)',money:15900,stats:{'Meals served':455,'Days played':27}}],
-    ['players','p_ravi',{name:'Ravi (sample)',money:3100,stats:{'Meals served':60,'Days played':5}}],
-    ['stores','s_nora',{name:'Noodle Bar (sample)',ownerId:'p_nora',earnedToday:1840,served:62,rating:4.6}],
-    ['stores','s_kade',{name:'Corner Cafe (sample)',ownerId:'p_kade',earnedToday:920,served:31,rating:4.1}],
-    ['stores','s_ines',{name:'Bakehouse (sample)',ownerId:'p_ines',earnedToday:2310,served:77,rating:4.8}],
+    ['players','p_ravi',{name:'Ravi (sample)',money:3100,stats:{'Meals served':60,'Days played':5}}]
+  ];
+  stores.forEach(function(s){var c=Object.assign({},s);delete c.id;L.push(['stores',s.id,c]);});
+  L=L.concat([
     ['friends','p_ines~p_nora',{a:'p_nora',b:'p_ines'}],
     ['friends','p_kade~p_nora',{a:'p_nora',b:'p_kade'}],
     ['friends','p_ines~p_ravi',{a:'p_ines',b:'p_ravi'}],
     ['shopdefs','sd_furniture',{name:'Furniture Shop',desc:'Tables, chairs and counters',createdAt:1}],
     ['shopdefs','sd_decor',{name:'Decor Shop',desc:'Make your store feel like yours',createdAt:2}],
     ['shopdefs','sd_blueprints',{name:'Blueprint Shop',desc:'Walls, doors and windows',createdAt:3}],
-    ['shops','sh_table',{shopId:'sd_furniture',name:'Oak bistro table',group:'Tables',price:220,stock:40,perBox:10,available:true}],
-    ['shops','sh_chair',{shopId:'sd_furniture',name:'Cushioned chair',group:'Seating',price:90,stock:3,perBox:20,available:true}],
-    ['shops','sh_lamp',{shopId:'sd_decor',name:'Pendant lamp',group:'Lighting',price:150,stock:25,perBox:10,available:true}],
-    ['shops','sh_fern',{shopId:'sd_decor',name:'Potted fern',group:'Plants',price:60,stock:0,perBox:15,available:true}],
-    ['shops','sh_neon',{shopId:'sd_decor',name:'Neon open sign',group:'Signs',price:340,stock:5,perBox:5,available:true}],
-    ['shops','bp_brick',{shopId:'sd_blueprints',name:'Brick wall',group:'Wall',price:120,stock:30,perBox:10,available:true}],
-    ['shops','bp_glass',{shopId:'sd_blueprints',name:'Glass wall',group:'Wall',price:260,stock:12,perBox:6,available:true}],
-    ['shops','bp_door',{shopId:'sd_blueprints',name:'Wooden door',group:'Door',price:140,stock:20,perBox:10,available:true}],
-    ['shops','bp_double',{shopId:'sd_blueprints',name:'Double door',group:'Door',price:310,stock:8,perBox:4,available:true}],
-    ['shops','bp_bay',{shopId:'sd_blueprints',name:'Bay window',group:'Window',price:280,stock:2,perBox:4,available:true}],
-    ['deliveries','d_one',{customer:'Walk-in customer (sample)',items:[{qty:2,name:'Oak bistro table',itemId:'sh_table'},{qty:1,name:'Birthday cake',itemId:''}],limitMin:45,reward:400,status:'open',createdAt:t-10*M,expiresAt:t+35*M}],
-    ['deliveries','d_two',{customer:'Office party (sample)',items:[{qty:6,name:'Cushioned chair',itemId:'sh_chair'}],limitMin:90,reward:650,status:'open',createdAt:t-20*M,expiresAt:t+70*M}],
+    ['shops','sh_table',{shopId:'sd_furniture',name:'Oak bistro table',group:'Tables',price:220,available:true}],
+    ['shops','sh_chair',{shopId:'sd_furniture',name:'Cushioned chair',group:'Seating',price:90,available:true}],
+    ['shops','sh_lamp',{shopId:'sd_decor',name:'Pendant lamp',group:'Lighting',price:150,available:true}],
+    ['shops','sh_fern',{shopId:'sd_decor',name:'Potted fern',group:'Plants',price:60,available:true}],
+    ['shops','sh_neon',{shopId:'sd_decor',name:'Neon open sign',group:'Signs',price:340,available:true}],
+    ['shops','bp_brick',{shopId:'sd_blueprints',name:'Brick wall',group:'Wall',price:120,available:true}],
+    ['shops','bp_glass',{shopId:'sd_blueprints',name:'Glass wall',group:'Wall',price:260,available:true}],
+    ['shops','bp_door',{shopId:'sd_blueprints',name:'Wooden door',group:'Door',price:140,available:true}],
+    ['shops','bp_double',{shopId:'sd_blueprints',name:'Double door',group:'Door',price:310,available:true}],
+    ['shops','bp_bay',{shopId:'sd_blueprints',name:'Bay window',group:'Window',price:280,available:true}],
+    ['deliveries','d_acc',{customer:'Hale Catering (sample)',address:'4 Station Ave',items:[{qty:2,name:'Ramen bowl',itemId:'m_ramen',storeId:'s_nora'}],reward:40,status:'accepted',storeId:'s_nora',acceptedBy:'p_nora',acceptedAt:t-5*M,createdAt:t-20*M}],
+    ['deliveries','d_done',{customer:'Mira Okafor (sample)',address:'18 Maple St',items:[{qty:3,name:'Chocolate cake',itemId:'m_cake',storeId:'s_ines'}],reward:65,status:'delivered',verdict:'real',storeId:'s_ines',acceptedBy:'p_ines',paid:65,acceptedAt:t-3*H,completedAt:t-2*H,createdAt:t-4*H}],
+    ['deliveries','d_caught',{customer:'Cu5t0mer_4821 (sample)',address:'NULL',items:[{qty:99,name:'Quantum waffle',itemId:'',storeId:''}],reward:900,status:'declined',verdict:'fake',declinedBy:'p_ines',bonus:50,tells:['Garbled customer name','An item no store sells'],completedAt:t-3*H,createdAt:t-5*H}],
     ['events','e_live',{title:'Furniture Sale',type:'discount',value:20,shopId:'sd_furniture',desc:'Everything in the Furniture Shop is cheaper.',startsAt:t-H,endsAt:t+3*H}],
     ['events','e_next',{title:'Double Coins Weekend',type:'multiplier',value:2,shopId:'',desc:'All deliveries and quests pay double.',startsAt:t+5*H,endsAt:t+9*H}],
+    ['events','e_rush',{title:'Lunch Delivery Rush',type:'rush',value:6,shopId:'',desc:'A wave of orders lands at once. Read each one before you accept.',startsAt:t+2*H,endsAt:t+4*H}],
     ['boards','b_money',{title:'Richest players',source:'players',field:'money',dir:'desc'}],
     ['boards','b_earn',{title:'Top earning stores today',source:'stores',field:'earnedToday',dir:'desc'}],
     ['boards','b_rating',{title:'Best rated stores',source:'stores',field:'rating',dir:'desc'}],
     ['boards','b_meals',{title:'Most meals served',source:'players',field:'Meals served',dir:'desc'}]
-  ];
+  ]);
   for(var i=0;i<L.length;i++){if(!(await write(L[i][0],L[i][1],L[i][2],{merge:false})))return;}
+  var pool=stores;
+  if(!(await createOrder(false,{pool:pool})))return;
+  if(!(await createOrder(false,{pool:pool})))return;
+  if(!(await createOrder(true,{pool:pool})))return;
+  if(!(await queueRush('e_rush',6,t+2*H,pool)))return;
   toast('Sample data loaded');
 }
 
-/* ---------- events (clicks) ---------- */
+/* ---------- clicks ---------- */
 function arm(btn,run){
   if(btn.dataset.armed){clearTimeout(Number(btn.dataset.armed));delete btn.dataset.armed;btn.textContent=btn.dataset.label;btn.classList.remove('armed');run();return;}
   btn.dataset.label=btn.textContent;btn.textContent=btn.dataset.arm;btn.classList.add('armed');
@@ -1051,6 +1397,7 @@ document.addEventListener('click',function(ev){
   if(!t){if(ev.target.id==='modal')closeModal();return;}
   var a=t.dataset.act;
   if(a==='tab'){S.tab=t.dataset.tab;try{localStorage.setItem('tcr-tab',S.tab);}catch(e){}render();return;}
+  if(a==='vtab'){S.vtab=t.dataset.v;try{localStorage.setItem('tcr-vtab',S.vtab);}catch(e){}render();try{window.scrollTo(0,0);}catch(e){}return;}
   if(a==='jump'){
     var sec=document.getElementById('sec-'+t.dataset.sec);
     if(sec){var calm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;sec.scrollIntoView({behavior:calm?'auto':'smooth',block:'start'});}
@@ -1073,8 +1420,15 @@ document.addEventListener('click',function(ev){
     openModal(t.dataset.coll,null,preset);return;
   }
   if(a==='edit'){openModal(t.dataset.coll,t.dataset.id);return;}
-  if(a==='restock'){openRestock(t.dataset.id);return;}
+  if(a==='addmenu'){openMenuItem(t.dataset.store,null);return;}
+  if(a==='editmenu'){openMenuItem(t.dataset.store,t.dataset.item);return;}
+  if(a==='delmenu'){arm(t,deleteMenuItem);return;}
+  if(a==='restock'){openRestock(t.dataset.store,t.dataset.item);return;}
+  if(a==='accept'){openAccept(t.dataset.id);return;}
+  if(a==='decline'){openDecline(t.dataset.id);return;}
   if(a==='deliver'){openDeliver(t.dataset.id);return;}
+  if(a==='random'){createOrder(Math.random()*100<fakeChance()).then(function(ok){if(ok)toast('New random delivery');});return;}
+  if(a==='clearfin'){arm(t,clearFinished);return;}
   if(a==='settings'){openModal('settings');return;}
   if(a==='del'){arm(t,deleteCurrent);return;}
   if(a==='roll'){arm(t,async function(){await rollQuests();toast('Quests rolled');});return;}
@@ -1098,34 +1452,34 @@ document.addEventListener('change',function(ev){
   var el=ev.target;
   if(el.matches&&el.matches('[data-qin]')){
     if(!S.owner)return;
-    var n=num(el.value);
-    if(el.dataset.k==='rating')n=Math.max(0,Math.min(5,n));
-    var patch={};
-    if(el.dataset.sub){patch[el.dataset.k]={};patch[el.dataset.k][el.dataset.sub]=n;}else{patch[el.dataset.k]=n;}
+    var n=num(el.value),mn=el.getAttribute('min'),mx=el.getAttribute('max');
+    if(mn!==null&&mn!=='')n=Math.max(num(mn),n);
+    if(mx!==null&&mx!=='')n=Math.min(num(mx),n);
+    var k=el.dataset.k,patch={};
+    if(el.dataset.sub&&el.dataset.sub2){patch[k]={};patch[k][el.dataset.sub]={};patch[k][el.dataset.sub][el.dataset.sub2]=n;}
+    else if(el.dataset.sub){patch[k]={};patch[k][el.dataset.sub]=n;}
+    else{patch[k]=n;}
     write(el.dataset.coll,el.dataset.id,patch);
     return;
   }
   if(el.name==='source'&&el.closest('#mform')){
     var sel=$('#f_field');if(sel)sel.innerHTML=optsHtml(fieldOptions(el.value),'');
   }
+  if(el.id==='f_type'&&el.closest('#mform'))syncEventForm(true);
+  if(el.id==='ac_store')syncAccept();
   if(el.classList&&el.classList.contains('is')&&el.closest('.itemrow')){
     el.closest('.itemrow').querySelector('.in').hidden=!!el.value;
   }
 });
 document.addEventListener('input',function(ev){
   if(ev.target.id==='q'){S.q=ev.target.value;var pl=$('#plist');if(pl)pl.innerHTML=playersList();}
-  if(ev.target.id==='rs_boxes')updateRestockPreview();
+  if(ev.target.id==='rs_qty')updateRestockPreview();
 });
 document.addEventListener('submit',function(ev){if(ev.target.id==='mform')submitModal(ev);});
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&S.modal)closeModal();});
 setInterval(function(){
   var t=now();
-  document.querySelectorAll('[data-until]').forEach(function(el){
-    if(el.classList.contains('dl-prog')){
-      var f=Number(el.dataset.from),u=Number(el.dataset.until),i=el.firstElementChild;
-      if(i)i.style.width=Math.max(0,Math.min(100,(u-t)/Math.max(1,u-f)*100))+'%';
-    }else{el.textContent=fmtDur(Number(el.dataset.until)-t);}
-  });
+  document.querySelectorAll('[data-until]').forEach(function(el){el.textContent=fmtDur(Number(el.dataset.until)-t);});
   var c=$('#cd');if(c)c.textContent=untilMidnight();
   if(timeSig()!==S.sig)schedule();
 },1000);
@@ -1172,10 +1526,10 @@ if(!cfgOk){
   S.signOut=function(){return signOut(auth);};
   onAuthStateChanged(auth,function(u){
     S.signedIn=!!u;
-    if(!u){S.owner=false;schedule();return;}
+    if(!u){S.owner=false;S.secrets={};schedule();return;}
     /* The database rules decide who may write; this probe asks them. */
     setDoc(doc(fdb,'meta','owner-check'),{at:Date.now()}).then(function(){
-      S.owner=true;maybeRoll();maybeMigrate();schedule();
+      S.owner=true;listenSecrets();maybeRoll();maybeMigrate();schedule();
     }).catch(function(){
       S.owner=false;toast('This account is not allowed to edit this site.','bad');schedule();
     });
