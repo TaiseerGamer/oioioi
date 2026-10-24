@@ -157,6 +157,14 @@ p.faint{margin:0}
 .strike{text-decoration:line-through;color:var(--muted);font:500 13px var(--f-mono)}
 .mult{font:600 11px var(--f-mono);padding:1px 6px;border-radius:5px;background:var(--coin);color:var(--bg);vertical-align:middle}
 .menu{display:grid;gap:6px}
+.catline{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;margin-top:6px}
+.catname{font:600 12px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.spchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip.sp{background:var(--coin);color:var(--bg)}
+.chip.sp b{color:inherit}
+.daytbl{display:grid;gap:6px}
+.daytbl .crow .num{min-width:84px;text-align:right}
+button[disabled]{opacity:.5;cursor:not-allowed}
 .mi{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
 .mi .mn{flex:1 1 120px;min-width:0;font-weight:600;overflow-wrap:anywhere}
 .mi .mn small{display:block;font:500 11px var(--f-body);color:var(--muted)}
@@ -203,6 +211,8 @@ select,.fld input,.search input,.itemrow input,.itemrow select{font:500 14px var
 .fld.chk{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:14px}
 .fld.chk input{width:18px;height:18px;min-height:0;accent-color:var(--accent)}
 .statrow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:6px;margin-bottom:6px}
+.invrow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:6px;margin-bottom:6px;align-items:center}
+.invrow input{font:500 14px var(--f-body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-height:38px;width:100%}
 .statrow input{font:500 14px var(--f-body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-height:38px;width:100%}
 .itemrow{display:grid;grid-template-columns:68px minmax(0,1fr) auto;gap:6px;margin-bottom:8px}
 .itemrow .in{grid-column:1/-1}
@@ -260,12 +270,12 @@ var today=function(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth(
 var uid=function(){return 'm'+Math.random().toString(36).slice(2,9);};
 var pick=function(a){return a[Math.floor(Math.random()*a.length)];};
 
-var COLLS=['players','friends','stores','shops','shopdefs','boards','quests','deliveries','events','meta'];
-var TABS=[['players','Players'],['network','Network'],['stores','Stores'],['customers','Customers'],['shops','Shops'],['deliveries','Deliveries'],['events','Events'],['leaderboard','Leaderboard'],['quests','Daily quests']];
+var COLLS=['players','friends','stores','shops','shopdefs','boards','quests','deliveries','events','specials','days','meta'];
+var TABS=[['players','Players'],['days','Days'],['network','Network'],['stores','Stores'],['customers','Customers'],['shops','Shops'],['deliveries','Deliveries'],['events','Events'],['leaderboard','Leaderboard'],['quests','Daily quests']];
 var VTABS=[['dash','Dashboard'],['shops','Shops']];
 /* Viewer dashboard order: what runs on a clock comes first. Shops have their own tab. */
-var DASH=[['events','Events'],['deliveries','Deliveries'],['quests','Daily quests'],['stores','Stores'],['customers','Customers'],['leaderboard','Leaderboard'],['players','Players'],['network','Network']];
-var S={players:[],friends:[],stores:[],shops:[],shopdefs:[],boards:[],quests:[],deliveries:[],events:[],meta:{},secrets:{},tab:'players',vtab:'dash',shopSel:'',q:'',owner:false,adminView:true,status:'connecting',saving:0,loaded:{},timeout:false,rolled:false,migrated:false,modal:null,dirty:false,noDb:false,sig:''};
+var DASH=[['days','Days'],['events','Events'],['deliveries','Deliveries'],['quests','Daily quests'],['stores','Stores'],['customers','Customers'],['leaderboard','Leaderboard'],['players','Players'],['network','Network']];
+var S={players:[],friends:[],stores:[],shops:[],shopdefs:[],boards:[],quests:[],deliveries:[],events:[],specials:[],days:[],meta:{},secrets:{},tab:'players',vtab:'dash',shopSel:'',q:'',owner:false,adminView:true,status:'connecting',saving:0,loaded:{},timeout:false,rolled:false,migrated:false,modal:null,dirty:false,noDb:false,sig:''};
 var db=null;
 try{var t0=localStorage.getItem('tcr-tab');if(t0&&TABS.some(function(t){return t[0]===t0;}))S.tab=t0;}catch(e){}
 try{var v0=localStorage.getItem('tcr-vtab');if(v0==='shops'||v0==='dash')S.vtab=v0;}catch(e){}
@@ -278,6 +288,8 @@ var fakePenalty=function(){return Math.max(0,setting('fakePenalty',100));};
 var catchBonus=function(){return Math.max(0,setting('catchBonus',50));};
 var restockPct=function(){return Math.max(0,setting('restockPct',100));};
 var ed=function(){return S.owner&&S.adminView;};
+var dayNo=function(){return Math.max(1,Math.floor(num((S.meta.day||{}).n,1)));};
+var shopPrice=function(i){var pct=discountFor(itemShopId(i));return Math.round(num(i.price)*(100-pct)/100);};
 var viewer=function(){return !ed();};
 var byId=function(list,id){for(var i=0;i<list.length;i++){if(list[i].id===id)return list[i];}return null;};
 var ready=function(){return S.timeout||COLLS.every(function(c){return S.loaded[c];});};
@@ -537,17 +549,39 @@ async function rollQuests(){
     var id=db.collection('quests').doc().id;
     await write('quests',id,{title:picks[i].title,desc:picks[i].desc,target:picks[i].target,reward:picks[i].reward,doneBy:[]},{merge:false});
   }
-  await write('meta','day',{date:today()},{merge:false});
+  await write('meta','day',{date:today(),n:dayNo()},{merge:false});
 }
 function maybeRoll(){
   if(S.owner&&!S.rolled&&S.loaded.meta&&S.loaded.quests&&(S.meta.day||{}).date!==today()){rollQuests();}
 }
-async function newDay(){
-  var i;
+async function endDay(){
+  var n=dayNo(),c=S.meta.customers||{},specials=c.specials||[],i;
+  var bonusByStore={};specials.forEach(function(sp){if(sp.s)bonusByStore[sp.s]=(bonusByStore[sp.s]||0)+num(sp.b);});
+  var per={};
+  function pp(p){return per[p.id]=per[p.id]||{name:p.name,earned:0,spent:0,served:0,gain:0};}
+  var earned=0,spent=0,served=0;
+  S.players.forEach(function(p){var r=pp(p);r.earned+=num(p.earnedToday);r.spent+=num(p.spentToday);earned+=num(p.earnedToday);spent+=num(p.spentToday);});
+  S.stores.forEach(function(s){
+    var gain=Math.max(0,num(s.earnedToday)+(bonusByStore[s.id]||0));
+    served+=num(s.served);earned+=gain;
+    var o=byId(S.players,s.ownerId);
+    if(o){var r=pp(o);r.earned+=gain;r.gain+=gain;r.served+=num(s.served);}
+  });
+  var day={n:n,date:(S.meta.day||{}).date||today(),endedAt:now(),earned:earned,spent:spent,served:served,customers:num(c.total),specials:specials.length,players:{}};
+  Object.keys(per).forEach(function(k){day.players[k]={name:per[k].name,earned:per[k].earned,spent:per[k].spent,served:per[k].served};});
+  var id='d'+String(n).padStart(5,'0');
+  if(!(await write('days',id,day,{merge:false})))return;
+  for(i=0;i<S.players.length;i++){
+    var p=S.players[i],r=per[p.id],patch={earnedToday:0,spentToday:0};
+    if(r.gain>0)patch.money=num(p.money)+r.gain;
+    if(r.served>0){patch.stats={};patch.stats['Customers served']=num((p.stats||{})['Customers served'])+r.served;}
+    await write('players',p.id,patch);
+  }
   for(i=0;i<S.stores.length;i++)await write('stores',S.stores[i].id,{earnedToday:0,served:0});
-  await write('meta','customers',{total:0,alloc:{}},{merge:false});
+  await write('meta','customers',{total:0,alloc:{},confirmed:false,specials:[]},{merge:false});
   await rollQuests();
-  toast('New day started');
+  await write('meta','day',{date:today(),n:n+1},{merge:false});
+  toast('Day '+n+' ended: '+money(earned)+' earned, '+money(spent)+' spent. Day '+(n+1)+' begins.');
 }
 
 /* ---------- rendering ---------- */
@@ -596,7 +630,7 @@ function render(){
   setHtml($('#foot'),S.noDb?'':(S.owner?'<button data-act="signout">Sign out</button>':(S.signedIn?'<span>This account cannot edit.</span><button data-act="signout">Sign out</button>':'<button data-act="signin">Owner sign in</button>')));
 }
 function mastRight(){
-  var h='<span id="status" class="pill"></span>';
+  var h='<span class="pill">Day '+dayNo()+'</span><span id="status" class="pill"></span>';
   if(S.owner){h+='<div class="seg" role="group" aria-label="View"><button data-act="mode" data-mode="admin" aria-pressed="'+S.adminView+'">Admin</button><button data-act="mode" data-mode="viewer" aria-pressed="'+!S.adminView+'">Viewer view</button></div>';}
   return h;
 }
@@ -607,7 +641,7 @@ function adminBar(){
     (ready()&&S.players.length+S.stores.length+S.shops.length+S.shopdefs.length===0?'<button class="btn primary" data-act="seed">Load sample data</button>':'')+
     '<button class="btn" data-act="settings">Game settings</button>'+
     '<button class="btn" data-act="roll" data-arm="Click again to roll quests">Roll quests</button>'+
-    '<button class="btn danger" data-act="newday" data-arm="Click again to reset the day">Start new day</button>';
+    '<button class="btn danger" data-act="endday" data-arm="Click again to end the day">End day</button>';
 }
 function summary(){
   var total=S.players.reduce(function(a,p){return a+num(p.money);},0);
@@ -615,7 +649,7 @@ function summary(){
   var cust=num((S.meta.customers||{}).total);
   var t=now(),open=S.deliveries.filter(function(d){return dlReleased(d,t)&&DL_OPEN[dlStatus(d)];}).length;
   function it(l,v,c){return '<div><dt>'+l+'</dt><dd class="'+(c||'')+'">'+esc(v)+'</dd></div>';}
-  return it('Players',int(S.players.length))+it('Money in play',money(total),'coin')+it('Earned today',money(earned),'coin')+it('Customers today',int(cust))+it('Open deliveries',int(open));
+  return it('Day',int(dayNo()))+it('Players',int(S.players.length))+it('Money in play',money(total),'coin')+it('Earned today',money(earned),'coin')+it('Customers today',int(cust))+it('Open deliveries',int(open));
 }
 function ribbon(){
   var t=now(),h='';
@@ -636,7 +670,7 @@ function vtabsHtml(){
 function jumpHtml(){
   return DASH.map(function(t){return '<button class="jchip" data-act="jump" data-sec="'+t[0]+'">'+t[1]+'</button>';}).join('');
 }
-var PANELS={players:playersPanel,network:networkPanel,stores:storesPanel,customers:customersPanel,shops:shopsPanel,deliveries:deliveriesPanel,events:eventsPanel,leaderboard:leaderboardPanel,quests:questsPanel};
+var PANELS={days:daysPanel,players:playersPanel,network:networkPanel,stores:storesPanel,customers:customersPanel,shops:shopsPanel,deliveries:deliveriesPanel,events:eventsPanel,leaderboard:leaderboardPanel,quests:questsPanel};
 function panelBase(){
   if(S.setup)return empty('Setup needed','Open firebase-config.js and paste your Firebase settings. The README lists every step.');
   if(S.noDb)return empty('Live data is not available','The site could not reach its database. Check your connection and reload.');
@@ -671,6 +705,7 @@ function playerRow(p){
   return '<article class="row"><div class="who">'+avatar(p.name)+'<div class="whotxt"><h3>'+esc(p.name)+'</h3><p>'+fc+(fc===1?' connection':' connections')+'</p></div></div>'+
     '<div class="cell"><span class="lbl">Money</span>'+(e?numInput('players',p.id,'money',p.money,{pre:cur(),label:'Money for '+p.name}):'<span class="num coin">'+money(p.money)+'</span>')+'</div>'+
     '<div class="cell grow"><span class="lbl">Stats</span><div class="chips">'+(st.length?st.map(function(k){return '<span class="chip"><span>'+esc(k)+'</span><b>'+int(p.stats[k])+'</b></span>';}).join(''):'<span class="faint">None yet</span>')+'</div></div>'+
+    (Object.keys(p.inv||{}).length?'<div class="cell grow"><span class="lbl">Owns</span><div class="chips">'+Object.keys(p.inv).map(function(k){return '<span class="chip"><span>'+esc(p.inv[k].name)+'</span><b>'+int(p.inv[k].qty)+'</b></span>';}).join('')+'</div></div>':'')+
     (e?'<button class="btn" data-act="edit" data-coll="players" data-id="'+esc(p.id)+'">Edit</button>':'')+'</article>';
 }
 
@@ -716,7 +751,7 @@ function webSvg(){
 /* stores and menus */
 function storesPanel(){
   var e=ed();
-  var h=head('Stores',e?'Today’s numbers and each store’s menu':'Today’s numbers and what each store sells',e?addBtn('stores','Add store'):'');
+  var h=head('Stores',e?'Earnings and customers go to each owner when you end the day':'Today’s numbers and what each store sells',e?addBtn('stores','Add store'):'');
   if(!S.stores.length)return h+empty('No stores yet.',e?'Add a store to track what it earns and what it sells.':'Stores will appear here once the owner adds them.',e?addBtn('stores','Add store'):'');
   var list=S.stores.slice().sort(function(a,b){return num(b.earnedToday)-num(a.earnedToday);});
   return h+'<div class="grid">'+list.map(storeCard).join('')+'</div>';
@@ -728,18 +763,28 @@ function stockTag(it){
   if(st<=5)return '<span class="tag warn">'+int(st)+' left</span>';
   return '<span class="tag">'+int(st)+' in stock</span>';
 }
+function menuRow(s,it,e){
+  if(!e)return '<div class="mi"><span class="mn">'+esc(it.name)+'</span><span class="mp">'+money(it.price)+'</span>'+stockTag(it)+'</div>';
+  var lr=it.lastRestock&&now()-num(it.lastRestock.at)<86400000?'<span class="tag good">+'+int(it.lastRestock.qty)+' restocked</span>':'';
+  return '<div class="mi"><span class="mn">'+esc(it.name)+'<small>Value '+money(it.value)+' \u00b7 restock '+money(unitCost(it))+' each</small></span><span class="mp">'+money(it.price)+'</span>'+lr+
+    '<span class="acts">'+numInput('stores',s.id,'menu',it.stock,{sub:it.id,sub2:'stock',min:0,small:true,label:'Stock of '+it.name+' at '+s.name})+
+    '<button class="btn sm" data-act="restock" data-store="'+esc(s.id)+'" data-item="'+esc(it.id)+'">Restock</button>'+
+    '<button class="btn sm" data-act="editmenu" data-store="'+esc(s.id)+'" data-item="'+esc(it.id)+'">Edit</button></span></div>';
+}
 function menuHtml(s){
   var e=ed(),items=menuItems(s);
   var h='<div class="menu"><div class="line"><span class="lbl">Menu</span>'+(e?'<button class="btn sm" data-act="addmenu" data-store="'+esc(s.id)+'">Add menu item</button>':'')+'</div>';
   if(!items.length)return h+'<p class="faint">'+(e?'No menu yet. Add the items this store sells.':'This store has not posted a menu yet.')+'</p></div>';
-  h+=items.map(function(it){
-    if(!e)return '<div class="mi"><span class="mn">'+esc(it.name)+'</span><span class="mp">'+money(it.price)+'</span>'+stockTag(it)+'</div>';
-    var lr=it.lastRestock&&now()-num(it.lastRestock.at)<86400000?'<span class="tag good">+'+int(it.lastRestock.qty)+' restocked</span>':'';
-    return '<div class="mi"><span class="mn">'+esc(it.name)+'<small>Value '+money(it.value)+' · restock '+money(unitCost(it))+' each</small></span><span class="mp">'+money(it.price)+'</span>'+lr+
-      '<span class="acts">'+numInput('stores',s.id,'menu',it.stock,{sub:it.id,sub2:'stock',min:0,small:true,label:'Stock of '+it.name+' at '+s.name})+
-      '<button class="btn sm" data-act="restock" data-store="'+esc(s.id)+'" data-item="'+esc(it.id)+'">Restock</button>'+
-      '<button class="btn sm" data-act="editmenu" data-store="'+esc(s.id)+'" data-item="'+esc(it.id)+'">Edit</button></span></div>';
-  }).join('');
+  var cats={},order=[];
+  items.forEach(function(it){var c=String(it.category||'').trim();if(!cats[c]){cats[c]=[];order.push(c);}cats[c].push(it);});
+  order.sort(function(a,b){if(a===b)return 0;if(a==='')return 1;if(b==='')return -1;return a.localeCompare(b);});
+  var anyCat=order.some(function(c){return c!=='';});
+  order.forEach(function(c){
+    if(anyCat){
+      h+='<div class="catline"><span class="catname">'+esc(c||'Other')+(c&&cats[c].length>1?' \u00b7 '+cats[c].length+' options':'')+'</span>'+(c&&e?'<button class="btn sm" data-act="restockcat" data-store="'+esc(s.id)+'" data-cat="'+esc(c)+'">Restock category</button>':'')+'</div>';
+    }
+    h+=cats[c].map(function(it){return menuRow(s,it,e);}).join('');
+  });
   return h+'</div>';
 }
 function storeCard(s){
@@ -752,23 +797,89 @@ function storeCard(s){
 }
 
 /* customers */
+function specialsSummary(list){
+  if(!list.length)return '<p class="faint">No special customers today.</p>';
+  var byType={};
+  list.forEach(function(sp){var k=sp.name||'Special';byType[k]=byType[k]||{n:0,stores:{}};byType[k].n++;var st=sp.s?byId(S.stores,sp.s):null;var nm=st?st.name:'Walking around';byType[k].stores[nm]=(byType[k].stores[nm]||0)+1;});
+  return '<div class="stack">'+Object.keys(byType).map(function(k){
+    var b=byType[k];
+    return '<div class="crow"><div class="nm"><span class="chip sp"><b>'+b.n+'\u00d7</b></span>'+esc(k)+'</div><span class="faint">'+Object.keys(b.stores).map(function(n){return esc(n)+' ('+b.stores[n]+')';}).join(', ')+'</span></div>';
+  }).join('')+'</div>';
+}
 function customersPanel(){
   var e=ed(),c=S.meta.customers||{},total=num(c.total),alloc=c.alloc||{};
   var assigned=0;S.stores.forEach(function(s){assigned+=num(alloc[s.id]);});
   var free=Math.max(0,total-assigned),denom=Math.max(total,assigned,1);
-  var h=head('Customers today','How many are coming, and where they are going');
+  var h=head('Customers today','How many are coming, and where they are going',
+    e?'<span class="pill '+(c.confirmed?'ok':'')+'">'+(c.confirmed?'Confirmed':'Not confirmed')+'</span><button class="btn '+(c.confirmed?'':'primary')+'" data-act="confirmcust">'+(c.confirmed?'Unconfirm':'Confirm customers')+'</button>':'');
   h+='<div class="flowhead"><div class="cell"><span class="lbl">Coming today</span>'+(e?numInput('meta','customers','total',total,{label:'Customers coming today'}):'<span class="big">'+int(total)+'</span>')+'</div>'+
      '<div class="cell"><span class="lbl">Going to stores</span><span class="num">'+int(assigned)+'</span></div>'+
      '<div class="cell"><span class="lbl">Not in a store yet</span><span class="num">'+int(free)+'</span></div></div>';
-  if(!S.stores.length)return h+empty('No stores to send customers to.',e?'Add a store first.':'');
-  var segs=S.stores.map(function(s,i){var n=num(alloc[s.id]);return n>0?'<span style="width:'+(n/denom*100)+'%;background:var(--c'+(i%6+1)+')" title="'+esc(s.name)+'"></span>':'';}).join('')+(free>0?'<span class="free" style="width:'+(free/denom*100)+'%" title="Not in a store yet"></span>':'');
-  h+='<div class="stackbar" role="img" aria-label="Customers split across stores">'+segs+'</div><div class="stack" style="margin-top:14px">';
-  h+=S.stores.map(function(s,i){
-    var n=num(alloc[s.id]),pct=total>0?Math.round(n/total*100):0;
-    return '<div class="crow"><div class="nm"><span class="sw" style="background:var(--c'+(i%6+1)+')"></span>'+esc(s.name)+'</div>'+
-      (e?numInput('meta','customers','alloc',n,{sub:s.id,label:'Customers going to '+s.name}):'<span class="num">'+int(n)+'</span>')+'<span class="sh">'+pct+'%</span></div>';
-  }).join('')+'</div>';
-  if(assigned>total&&total>0)h+='<p class="faint" style="margin-top:10px">More customers are assigned to stores than are coming today. Raise the total or lower a store.</p>';
+  if(!S.stores.length)h+=empty('No stores to send customers to.',e?'Add a store first.':'');
+  else{
+    var segs=S.stores.map(function(s,i){var n=num(alloc[s.id]);return n>0?'<span style="width:'+(n/denom*100)+'%;background:var(--c'+(i%6+1)+')" title="'+esc(s.name)+'"></span>':'';}).join('')+(free>0?'<span class="free" style="width:'+(free/denom*100)+'%" title="Not in a store yet"></span>':'');
+    h+='<div class="stackbar" role="img" aria-label="Customers split across stores">'+segs+'</div><div class="stack" style="margin-top:14px">';
+    h+=S.stores.map(function(s,i){
+      var n=num(alloc[s.id]),pct=total>0?Math.round(n/total*100):0;
+      return '<div class="crow"><div class="nm"><span class="sw" style="background:var(--c'+(i%6+1)+')"></span>'+esc(s.name)+'</div>'+
+        (e?numInput('meta','customers','alloc',n,{sub:s.id,label:'Customers going to '+s.name}):'<span class="num">'+int(n)+'</span>')+'<span class="sh">'+pct+'%</span></div>';
+    }).join('')+'</div>';
+    if(assigned>total&&total>0)h+='<p class="faint" style="margin-top:10px">More customers are assigned to stores than are coming today. Raise the total or lower a store.</p>';
+  }
+  var sp=c.specials||[];
+  h+='<div class="bar" style="margin-top:28px"><div><h2>Special customers</h2><p class="hint">'+(e?'Each customer rolls these chances (out of 100). Confirm today\u2019s customers, then spawn.':'Unusual visitors in the stores today')+'</p></div>'+
+    (e?'<div class="baract"><button class="btn primary" data-act="spawn"'+(c.confirmed?'':' disabled')+'>'+(sp.length?'Spawn again':'Spawn special customers')+'</button>'+addBtn('specials','Add type')+'</div>':'')+'</div>';
+  if(e){
+    if(!S.specials.length)h+=empty('No special customer types yet.','Add types like Influencer or Karen with a chance and a bonus.',addBtn('specials','Add type'));
+    else h+='<div class="grid" style="margin-bottom:14px">'+S.specials.map(function(t){
+      return '<article class="card"><div class="card-top"><div><h3>'+esc(t.name)+'</h3><p class="meta">'+esc(t.desc||'')+'</p></div><button class="btn" data-act="edit" data-coll="specials" data-id="'+esc(t.id)+'">Edit</button></div><div class="line"><span class="lbl">Chance</span><span class="num">'+num(t.chance)+'%</span><span class="lbl">Bonus</span><span class="num coin">'+(num(t.bonus)<0?'\u2212':'+')+money(Math.abs(num(t.bonus)))+'</span></div></article>';
+    }).join('')+'</div>';
+    if(c.confirmed===false||c.confirmed===undefined)h+='<p class="faint">Confirm the customers above to unlock spawning.</p>';
+  }
+  h+=specialsSummary(sp);
+  return h;
+}
+async function spawnSpecials(){
+  var c=S.meta.customers||{};
+  if(!c.confirmed){toast('Confirm today\u2019s customers first.','bad');return;}
+  if(!S.specials.length){toast('Add a special customer type first.','bad');return;}
+  var types=S.specials.filter(function(t){return num(t.chance)>0;});
+  var alloc=c.alloc||{},list=[],assigned=0;
+  function roll(storeId,count){
+    for(var i=0;i<count;i++){
+      var r=Math.random()*100,cum=0;
+      for(var j=0;j<types.length;j++){cum+=num(types[j].chance);if(r<cum){list.push({t:types[j].id,name:types[j].name,s:storeId,b:num(types[j].bonus)});break;}}
+    }
+  }
+  S.stores.forEach(function(s){var n=Math.max(0,Math.floor(num(alloc[s.id])));assigned+=n;roll(s.id,n);});
+  roll('',Math.max(0,Math.floor(num(c.total))-assigned));
+  if(await write('meta','customers',{specials:list,spawnedAt:now()}))toast(list.length?list.length+' special '+(list.length===1?'customer':'customers')+' spawned':'No special customers this time');
+}
+
+/* days */
+function dayCard(d,big){
+  var pl=Object.keys(d.players||{}).map(function(k){return d.players[k];}).sort(function(a,b){return num(b.earned)-num(a.earned);});
+  return '<article class="card"><div class="card-top"><div><h3>Day '+int(d.n)+' recap</h3><p class="meta">'+esc(d.date||'')+'</p></div></div>'+
+    '<div class="metrics"><div class="cell"><span class="lbl">Players earned</span><span class="num coin">'+money(d.earned)+'</span></div><div class="cell"><span class="lbl">Players spent</span><span class="num">'+money(d.spent)+'</span></div>'+
+    '<div class="cell"><span class="lbl">Customers served</span><span class="num">'+int(d.served)+'</span></div><div class="cell"><span class="lbl">Customers came</span><span class="num">'+int(d.customers)+(num(d.specials)>0?' ('+int(d.specials)+' special)':'')+'</span></div></div>'+
+    (pl.length?'<div class="daytbl"><span class="lbl">By player</span>'+pl.map(function(r){return '<div class="crow"><div class="nm">'+esc(r.name)+'</div><span class="faint">earned</span><span class="num coin">'+money(r.earned)+'</span><span class="faint">spent</span><span class="num">'+money(r.spent)+'</span></div>';}).join('')+'</div>':'')+'</article>';
+}
+function daysPanel(){
+  var e=ed(),n=dayNo();
+  var list=S.days.slice().sort(function(a,b){return num(b.n)-num(a.n);});
+  var h=head('Days','Day '+n+' is in progress',e?'<button class="btn danger" data-act="endday" data-arm="Click again to end the day">End day</button>':'');
+  var c=S.meta.customers||{},se=0,sv=0,pe=0,ps=0;
+  S.stores.forEach(function(s){se+=num(s.earnedToday);sv+=num(s.served);});
+  (c.specials||[]).forEach(function(sp){if(sp.s)se+=num(sp.b);});
+  S.players.forEach(function(p){pe+=num(p.earnedToday);ps+=num(p.spentToday);});
+  h+='<div class="flowhead"><div class="cell"><span class="lbl">Current day</span><span class="big">'+n+'</span></div><div class="cell"><span class="lbl">Earned so far</span><span class="num coin">'+money(se+pe)+'</span></div><div class="cell"><span class="lbl">Spent so far</span><span class="num">'+money(ps)+'</span></div><div class="cell"><span class="lbl">Customers served so far</span><span class="num">'+int(sv)+'</span></div></div>';
+  if(!list.length)return h+empty('No finished days yet.',e?'Press End day when the day is over. Store earnings and customers go to their owners and a recap appears here.':'A recap of each day appears here when it ends.');
+  h+='<div class="grid">'+dayCard(list[0],true)+'</div>';
+  if(list.length>1){
+    h+='<div class="group">Earlier days</div><div class="stack">'+list.slice(1,11).map(function(d){
+      return '<div class="crow"><div class="nm">Day '+int(d.n)+'</div><span class="faint">earned</span><span class="num coin">'+money(d.earned)+'</span><span class="faint">spent</span><span class="num">'+money(d.spent)+'</span><span class="faint">served</span><span class="num">'+int(d.served)+'</span></div>';
+    }).join('')+'</div>';
+  }
   return h;
 }
 
@@ -780,7 +891,7 @@ function shopsPanel(){
     defs.forEach(function(sd){var items=shopItems(sd.id,false);if(!items.length)return;any=true;h+=shopBlock(sd,items);});
     return any?h:h+empty('Nothing for sale right now.','Check back soon.');
   }
-  var h2=head('Shops','Everything in a shop is always available. Stores restock from their own menus in the Stores tab.',addBtn('shopdefs','Add shop'));
+  var h2=head('Shops','Everything in a shop is always available. Press Buy to purchase an item for a player.',addBtn('shopdefs','Add shop'));
   if(!defs.length)return h2+empty('No shops yet.','Create a shop (Furniture shop, Blueprint shop, anything you like), then add items to it.',addBtn('shopdefs','Add shop'));
   var sel=selShop(),sd=byId(defs,sel);
   h2+='<div class="bar"><div class="subtabs" role="group" aria-label="Shops">'+defs.map(function(d){return '<button data-act="shopsel" data-shop="'+esc(d.id)+'" aria-pressed="'+(d.id===sel)+'">'+esc(d.name)+'</button>';}).join('')+'</div>'+
@@ -806,7 +917,7 @@ function itemCard(i){
   var price=pct>0?'<span class="num coin">'+money(Math.round(num(i.price)*(100-pct)/100))+'</span> <span class="strike">'+money(i.price)+'</span>':'<span class="num coin">'+money(i.price)+'</span>';
   return '<article class="item'+(i.available===false?' hidden':'')+'"><div class="line"><h4>'+esc(i.name)+'</h4><span>'+price+'</span></div>'+
     (i.available===false?'<div class="line"><span class="tag">Hidden from viewers</span></div>':'')+
-    (e?'<div class="card-acts"><button class="btn" data-act="edit" data-coll="shops" data-id="'+esc(i.id)+'">Edit</button></div>':'')+'</article>';
+    (e?'<div class="card-acts"><button class="btn primary" data-act="buy" data-id="'+esc(i.id)+'">Buy for a player</button><button class="btn" data-act="edit" data-coll="shops" data-id="'+esc(i.id)+'">Edit</button></div>':'')+'</article>';
 }
 
 /* deliveries */
@@ -949,7 +1060,8 @@ var SCHEMAS={
   players:{noun:'player',del:true,fields:[
     {k:'name',label:'Name',t:'text',req:true,max:40},
     {k:'money',label:'Money',t:'number'},
-    {k:'stats',label:'Stats (anything you want to track)',t:'stats'}]},
+    {k:'stats',label:'Stats (anything you want to track)',t:'stats'},
+    {k:'inv',label:'Items they own (set a quantity to 0 to remove)',t:'inv'}]},
   stores:{noun:'store',del:true,fields:[
     {k:'name',label:'Store name',t:'text',req:true,max:48},
     {k:'ownerId',label:'Owner',t:'select',opts:function(){return [['','Unassigned']].concat(S.players.map(function(p){return [p.id,p.name];}));}},
@@ -989,6 +1101,11 @@ var SCHEMAS={
     {k:'desc',label:'Description',t:'text',max:140},
     {k:'target',label:'Goal',t:'number',min:0},
     {k:'reward',label:'Reward',t:'number',min:0}]},
+  specials:{noun:'special customer type',del:true,fields:[
+    {k:'name',label:'Name (Influencer, Karen\u2026)',t:'text',req:true,max:30},
+    {k:'chance',label:'Chance per customer (%)',t:'number',min:0,max:100},
+    {k:'bonus',label:'Money they add to the store (negative for a refund)',t:'number'},
+    {k:'desc',label:'Short description',t:'text',max:100}]},
   settings:{noun:'game settings',title:'Game settings',coll:'meta',id:'settings',fields:[
     {k:'gameName',label:'Game name',t:'text',max:40},
     {k:'currency',label:'Currency symbol',t:'text',max:3},
@@ -1000,7 +1117,7 @@ var SCHEMAS={
 function defaults(key,preset){
   var h=nextHour();
   var d={
-    players:{name:'',money:0,stats:{}},
+    players:{name:'',money:0,stats:{},inv:{},earnedToday:0,spentToday:0},
     stores:{name:'',ownerId:'',earnedToday:0,served:0,rating:4},
     shopdefs:{name:'',desc:''},
     shops:{shopId:selShop(),name:'',group:'',price:0,available:true},
@@ -1008,6 +1125,7 @@ function defaults(key,preset){
     events:{title:'',type:'multiplier',value:2,shopId:'',desc:'',startsAt:h,endsAt:h+7200000},
     boards:{title:'',source:'players',field:'money',dir:'desc'},
     quests:{title:'',desc:'',target:1,reward:100,doneBy:[]},
+    specials:{name:'',chance:5,bonus:50,desc:''},
     settings:{gameName:'',currency:'$',restockPct:100,fakeChance:25,fakePenalty:100,catchBonus:50}
   }[key];
   return Object.assign({},d,preset||{});
@@ -1048,6 +1166,11 @@ function fieldHtml(f,c){
   if(f.t==='items'){
     var rows=(v&&v.length?v:[{}]).map(itemRow).join('');
     return '<div class="fld"><span>'+esc(f.label)+'</span><div id="itemrows">'+rows+'</div><div><button type="button" class="btn" data-act="additem">Add an item</button></div></div>';
+  }
+  if(f.t==='inv'){
+    var iv=v||{},ik=Object.keys(iv);
+    if(!ik.length)return '';
+    return '<div class="fld"><span>'+esc(f.label)+'</span><div id="invrows">'+ik.map(function(k){return '<div class="invrow" data-inv="'+esc(k)+'"><span>'+esc(iv[k].name)+'</span><input class="iv" type="number" min="0" step="1" aria-label="Quantity of '+esc(iv[k].name)+'" value="'+esc(num(iv[k].qty))+'"></div>';}).join('')+'</div></div>';
   }
   if(f.t==='stats'){
     var keys={};S.players.forEach(function(p){Object.keys(p.stats||{}).forEach(function(k){keys[k]=1;});});
@@ -1096,9 +1219,11 @@ function playerOpts(first){return '<option value="">'+esc(first)+'</option>'+S.p
 function openMenuItem(storeId,itemId){
   var st=byId(S.stores,storeId);if(!st)return;
   var it=itemId?(st.menu||{})[itemId]:null;
-  var c=it||{name:'',price:10,value:5,stock:0};
+  var c=it||{name:'',price:10,value:5,stock:0,category:''};
+  var cs={};S.stores.forEach(function(x){menuItems(x).forEach(function(m){if(m.category)cs[m.category]=1;});});
   openCustom('menuitem',storeId,(it?'Edit item at ':'Add item to ')+st.name,
     '<label class="fld"><span>Item name</span><input id="mi_name" name="name" type="text" maxlength="40" required value="'+esc(c.name)+'"></label>'+
+    '<label class="fld"><span>Category (optional). Items sharing a category are its variants and can be restocked together.</span><input id="mi_cat" name="category" type="text" maxlength="30" list="dl_cats" value="'+esc(c.category||'')+'"></label><datalist id="dl_cats">'+Object.keys(cs).map(function(k){return '<option value="'+esc(k)+'">';}).join('')+'</datalist>'+
     '<label class="fld"><span>Menu price (what customers pay)</span><input id="mi_price" name="price" type="number" min="0" step="any" value="'+esc(c.price)+'"></label>'+
     '<label class="fld"><span>Item value (restock price is based on this)</span><input id="mi_value" name="value" type="number" min="0" step="any" value="'+esc(c.value)+'"></label>'+
     '<label class="fld"><span>Units in stock</span><input id="mi_stock" name="stock" type="number" min="0" step="1" value="'+esc(c.stock)+'"></label>',
@@ -1177,14 +1302,85 @@ function openDeliver(id){
   if(!fake)body+='<label class="fld chk"><input name="pay" type="checkbox" checked><span>Add the earning to the player’s money</span></label>';
   openCustom('deliver',id,(fake?'Fake order from ':'Delivered to ')+d.customer,body,fake?'Confirm':'Mark delivered');
 }
+function openBuy(id){
+  var i=byId(S.shops,id);if(!i)return;
+  if(!S.players.length){toast('Add a player first.','bad');return;}
+  var pct=discountFor(itemShopId(i));
+  openCustom('buy',id,'Buy '+i.name,
+    '<p class="faint">'+esc(money(shopPrice(i)))+' each'+(pct>0?' (sale price, '+pct+'% off)':'')+'. The cost comes out of the player\u2019s money.</p>'+
+    '<label class="fld"><span>Buying for</span><select id="by_payer" name="payer">'+playerOpts('Pick a player')+'</select></label>'+
+    '<label class="fld"><span>Quantity</span><input id="by_qty" name="qty" type="number" min="1" step="1" value="1"></label><p id="by_prev" class="faint"></p>','Buy');
+  updateBuyPreview();
+}
+function updateBuyPreview(){
+  var md=S.modal;if(!md||md.key!=='buy')return;
+  var i=byId(S.shops,md.id),el=$('#by_prev');if(!i||!el)return;
+  var q=Math.max(1,Math.floor(num($('#by_qty').value,1))),p=byId(S.players,$('#by_payer').value),cost=q*shopPrice(i);
+  el.textContent='Cost '+money(cost)+(p?' \u00b7 '+p.name+' would have '+money(num(p.money)-cost)+' left':'');
+}
+function openRestockCat(storeId,cat){
+  var st=byId(S.stores,storeId);if(!st)return;
+  var items=menuItems(st).filter(function(it){return String(it.category||'').trim()===cat;});
+  if(!items.length)return;
+  openCustom('restockcat',storeId,'Restock '+cat,
+    '<p class="faint">Buy units for any option in this category at '+esc(st.name)+'. Leave an option at 0 to skip it.</p>'+
+    items.map(function(it){return '<label class="fld"><span>'+esc(it.name)+' \u00b7 '+int(it.stock)+' in stock \u00b7 '+esc(money(unitCost(it)))+' each</span><input name="q_'+esc(it.id)+'" type="number" min="0" step="1" value="10"></label>';}).join('')+
+    '<label class="fld"><span>Paid by</span><select id="rc_payer" name="payer">'+playerOpts('The house (no player is charged)')+'</select></label><p id="rc_prev" class="faint"></p>','Buy units','',{cat:cat});
+  var pay=$('#rc_payer');if(pay&&st.ownerId&&byId(S.players,st.ownerId))pay.value=st.ownerId;
+  updateCatPreview();
+}
+function catQtys(form,md){
+  var st=byId(S.stores,md.id),out=[];if(!st)return out;
+  menuItems(st).filter(function(it){return String(it.category||'').trim()===md.cat;}).forEach(function(it){
+    var el=form.elements.namedItem('q_'+it.id),q=el?Math.max(0,Math.floor(num(el.value))):0;
+    if(q>0)out.push({it:it,q:q});
+  });
+  return out;
+}
+function updateCatPreview(){
+  var md=S.modal;if(!md||md.key!=='restockcat')return;
+  var el=$('#rc_prev');if(!el)return;
+  var list=catQtys($('#mform'),md),cost=0,units=0;
+  list.forEach(function(r){cost+=r.q*unitCost(r.it);units+=r.q;});
+  el.textContent=units+' units \u00b7 cost '+money(cost);
+}
 var CUSTOM={
+  buy:function(form,md){
+    var i=byId(S.shops,md.id);if(!i)return null;
+    var p=byId(S.players,form.elements.namedItem('payer').value);
+    if(!p){toast('Pick the player who is buying.','bad');return null;}
+    var qty=Math.max(1,Math.floor(num(form.elements.namedItem('qty').value,1))),cost=qty*shopPrice(i);
+    if(num(p.money)<cost){toast(p.name+' has '+money(p.money)+'. This costs '+money(cost)+'.','bad');return null;}
+    return async function(){
+      var cur=(p.inv||{})[i.id],patch={money:num(p.money)-cost,spentToday:num(p.spentToday)+cost,inv:{}};
+      patch.inv[i.id]={name:i.name,qty:num(cur&&cur.qty)+qty};
+      if(await write('players',p.id,patch))toast(p.name+' bought '+qty+' '+i.name+' for '+money(cost));
+    };
+  },
+  restockcat:function(form,md){
+    var st=byId(S.stores,md.id);if(!st)return null;
+    var list=catQtys(form,md);
+    if(!list.length){toast('Enter at least one unit to buy.','bad');return null;}
+    var cost=0;list.forEach(function(r){cost+=r.q*unitCost(r.it);});
+    var pid=form.elements.namedItem('payer').value,p=pid?byId(S.players,pid):null;
+    if(pid&&!p)return null;
+    if(p&&num(p.money)<cost){toast(p.name+' has '+money(p.money)+'. This restock costs '+money(cost)+'.','bad');return null;}
+    return async function(){
+      var patch={menu:{}};
+      list.forEach(function(r){patch.menu[r.it.id]={stock:num(r.it.stock)+r.q,lastRestock:{qty:r.q,at:now()}};});
+      var ok=await write('stores',st.id,patch);
+      if(ok&&p&&cost>0)ok=await write('players',p.id,{money:num(p.money)-cost,spentToday:num(p.spentToday)+cost});
+      if(ok)toast('Restocked '+md.cat+(cost>0?' for '+money(cost):''));
+    };
+  },
   menuitem:function(form,md){
     var st=byId(S.stores,md.id);if(!st)return null;
     var name=form.elements.namedItem('name').value.trim();
     if(!name){toast('Give the item a name first.','bad');return null;}
     var price=Math.max(0,num(form.elements.namedItem('price').value)),value=Math.max(0,num(form.elements.namedItem('value').value)),stock=Math.max(0,Math.floor(num(form.elements.namedItem('stock').value)));
+    var category=form.elements.namedItem('category').value.trim();
     var menu=Object.assign({},st.menu||{}),iid=md.itemId||uid(),prev=menu[iid]||{};
-    menu[iid]=Object.assign({},prev,{name:name,price:price,value:value,stock:stock,createdAt:prev.createdAt||now()});
+    menu[iid]=Object.assign({},prev,{name:name,price:price,value:value,stock:stock,category:category,createdAt:prev.createdAt||now()});
     return async function(){
       var d=getDoc('stores',st.id);d.menu=menu;
       if(await write('stores',st.id,d,{merge:false}))toast('Menu saved');
@@ -1199,7 +1395,7 @@ var CUSTOM={
     return async function(){
       var patch={menu:{}};patch.menu[md.itemId]={stock:num(it.stock)+qty,lastRestock:{qty:qty,at:now()}};
       var ok=await write('stores',st.id,patch);
-      if(ok&&p&&cost>0)ok=await write('players',p.id,{money:num(p.money)-cost});
+      if(ok&&p&&cost>0)ok=await write('players',p.id,{money:num(p.money)-cost,spentToday:num(p.spentToday)+cost});
       if(ok)toast('Restocked '+qty+' '+it.name+(cost>0?' for '+money(cost):''));
     };
   },
@@ -1219,7 +1415,7 @@ var CUSTOM={
       var data={status:'declined',verdict:fake?'fake':'real',completedAt:now(),declinedBy:p?p.id:'',bonus:bonus};
       if(fake)data.tells=tellsOf(d.id);
       var ok=await write('deliveries',d.id,data);
-      if(ok&&bonus>0)await write('players',p.id,{money:num(p.money)+bonus});
+      if(ok&&bonus>0)await write('players',p.id,{money:num(p.money)+bonus,earnedToday:num(p.earnedToday)+bonus});
       if(ok)toast(fake?'Fake order caught':'Order declined');
     };
   },
@@ -1235,12 +1431,12 @@ var CUSTOM={
       if(fake){
         var pen=p?Math.min(Math.max(0,num(p.money)),fakePenalty()):0;
         ok=await write('deliveries',d.id,{status:'scam',verdict:'fake',completedAt:now(),acceptedBy:p?p.id:'',penalty:pen,paid:0,tells:tellsOf(d.id)});
-        if(ok&&pen>0)await write('players',p.id,{money:num(p.money)-pen});
+        if(ok&&pen>0)await write('players',p.id,{money:num(p.money)-pen,spentToday:num(p.spentToday)+pen});
         if(ok)toast('It was a fake order');
         return;
       }
       ok=await write('deliveries',d.id,{status:'delivered',verdict:'real',completedAt:now(),acceptedBy:p?p.id:'',paid:(p&&pay)?amount:0});
-      if(ok&&p&&pay)ok=await write('players',p.id,{money:num(p.money)+amount});
+      if(ok&&p&&pay)ok=await write('players',p.id,{money:num(p.money)+amount,earnedToday:num(p.earnedToday)+amount});
       if(ok&&st){
         var left={},touched=false;
         (d.items||[]).forEach(function(it){var m=findMenu(st,it.name);if(m){var have=left[m.id]!==undefined?left[m.id]:num(m.stock);left[m.id]=Math.max(0,have-num(it.qty));touched=true;}});
@@ -1266,6 +1462,10 @@ async function submitModal(ev){
       var st={};
       form.querySelectorAll('.statrow').forEach(function(r){var k=r.querySelector('.sk').value.trim();if(k)st[k]=num(r.querySelector('.sv').value);});
       data.stats=st;
+    }else if(f.t==='inv'){
+      var invOut={},old0=getDoc('players',md.id)||{},oi=old0.inv||{};
+      form.querySelectorAll('[data-inv]').forEach(function(r){var k=r.dataset.inv,q=Math.max(0,Math.floor(num(r.querySelector('.iv').value)));if(q>0&&oi[k])invOut[k]={name:oi[k].name,qty:q};});
+      data.inv=invOut;
     }else if(f.t==='items'){
       var items=[];
       form.querySelectorAll('.itemrow').forEach(function(r){
@@ -1331,15 +1531,20 @@ async function seedSample(){
   var t=now(),H=3600000,M=60000;
   var stores=[
     {id:'s_nora',name:'Noodle Bar (sample)',ownerId:'p_nora',earnedToday:1840,served:62,rating:4.6,menu:{
-      m_ramen:{name:'Ramen bowl',price:14,value:6,stock:30,createdAt:1},m_gyoza:{name:'Gyoza',price:8,value:3,stock:4,createdAt:2},m_tea:{name:'Iced tea',price:5,value:2,stock:0,createdAt:3}}},
+      m_ramen:{name:'Ramen bowl',price:14,value:6,stock:30,category:'Noodles',createdAt:1},m_gyoza:{name:'Gyoza',price:8,value:3,stock:4,category:'Sides',createdAt:2},m_tea:{name:'Iced tea',price:5,value:2,stock:0,category:'Drinks',createdAt:3}}},
     {id:'s_kade',name:'Corner Cafe (sample)',ownerId:'p_kade',earnedToday:920,served:31,rating:4.1,menu:{
       m_latte:{name:'Latte',price:6,value:2,stock:25,createdAt:1},m_sand:{name:'Club sandwich',price:11,value:5,stock:12,createdAt:2}}},
     {id:'s_ines',name:'Bakehouse (sample)',ownerId:'p_ines',earnedToday:2310,served:77,rating:4.8,menu:{
-      m_cake:{name:'Chocolate cake',price:18,value:8,stock:9,createdAt:1},m_bread:{name:'Sourdough loaf',price:9,value:3,stock:20,createdAt:2},m_cookie:{name:'Cookie',price:3,value:1,stock:60,createdAt:3}}}
+      m_cake:{name:'Chocolate cake',price:18,value:8,stock:9,category:'Cakes',createdAt:1},m_cake2:{name:'Strawberry cake',price:19,value:9,stock:3,category:'Cakes',createdAt:2},m_cake3:{name:'Lemon cake',price:17,value:7,stock:0,category:'Cakes',createdAt:3},m_bread:{name:'Sourdough loaf',price:9,value:3,stock:20,category:'Bread',createdAt:4},m_cookie:{name:'Cookie',price:3,value:1,stock:60,category:'Bread',createdAt:5}}}
   ];
   var L=[
     ['meta','settings',{gameName:'My Tycoon Game',currency:'$',restockPct:100,fakeChance:25,fakePenalty:100,catchBonus:50}],
-    ['meta','customers',{total:240,alloc:{s_nora:80,s_kade:55,s_ines:90}}],
+    ['meta','customers',{total:240,alloc:{s_nora:80,s_kade:55,s_ines:90},confirmed:false,specials:[]}],
+    ['meta','day',{date:today(),n:3}],
+    ['specials','sp_inf',{name:'Influencer',chance:6,bonus:80,desc:'Posts about the store. Big tipper.'}],
+    ['specials','sp_karen',{name:'Karen',chance:4,bonus:-40,desc:'Demands a manager and a refund.'}],
+    ['days','d00001',{n:1,date:'(sample)',endedAt:t-2*86400000,earned:2100,spent:640,served:96,customers:180,specials:2,players:{p_nora:{name:'Nora (sample)',earned:1200,spent:300,served:60},p_ines:{name:'Ines (sample)',earned:900,spent:340,served:36}}}],
+    ['days','d00002',{n:2,date:'(sample)',endedAt:t-86400000,earned:3480,spent:910,served:140,customers:230,specials:3,players:{p_nora:{name:'Nora (sample)',earned:1800,spent:410,served:70},p_ines:{name:'Ines (sample)',earned:1680,spent:500,served:70}}}],
     ['players','p_nora',{name:'Nora (sample)',money:12450,stats:{'Meals served':340,'Days played':21}}],
     ['players','p_kade',{name:'Kade (sample)',money:8200,stats:{'Meals served':210,'Days played':14}}],
     ['players','p_ines',{name:'Ines (sample)',money:15900,stats:{'Meals served':455,'Days played':27}}],
@@ -1424,6 +1629,10 @@ document.addEventListener('click',function(ev){
   if(a==='editmenu'){openMenuItem(t.dataset.store,t.dataset.item);return;}
   if(a==='delmenu'){arm(t,deleteMenuItem);return;}
   if(a==='restock'){openRestock(t.dataset.store,t.dataset.item);return;}
+  if(a==='restockcat'){openRestockCat(t.dataset.store,t.dataset.cat);return;}
+  if(a==='buy'){openBuy(t.dataset.id);return;}
+  if(a==='confirmcust'){write('meta','customers',{confirmed:!(S.meta.customers||{}).confirmed});return;}
+  if(a==='spawn'){spawnSpecials();return;}
   if(a==='accept'){openAccept(t.dataset.id);return;}
   if(a==='decline'){openDecline(t.dataset.id);return;}
   if(a==='deliver'){openDeliver(t.dataset.id);return;}
@@ -1432,7 +1641,7 @@ document.addEventListener('click',function(ev){
   if(a==='settings'){openModal('settings');return;}
   if(a==='del'){arm(t,deleteCurrent);return;}
   if(a==='roll'){arm(t,async function(){await rollQuests();toast('Quests rolled');});return;}
-  if(a==='newday'){arm(t,newDay);return;}
+  if(a==='endday'){arm(t,endDay);return;}
   if(a==='connect'){
     var x=$('#fa').value,y=$('#fb').value;
     if(!x||!y||x===y){toast('Pick two different players.','bad');return;}
@@ -1456,9 +1665,11 @@ document.addEventListener('change',function(ev){
     if(mn!==null&&mn!=='')n=Math.max(num(mn),n);
     if(mx!==null&&mx!=='')n=Math.min(num(mx),n);
     var k=el.dataset.k,patch={};
+    var isCust=el.dataset.coll==='meta'&&el.dataset.id==='customers';
     if(el.dataset.sub&&el.dataset.sub2){patch[k]={};patch[k][el.dataset.sub]={};patch[k][el.dataset.sub][el.dataset.sub2]=n;}
     else if(el.dataset.sub){patch[k]={};patch[k][el.dataset.sub]=n;}
     else{patch[k]=n;}
+    if(isCust)patch.confirmed=false;
     write(el.dataset.coll,el.dataset.id,patch);
     return;
   }
@@ -1467,6 +1678,7 @@ document.addEventListener('change',function(ev){
   }
   if(el.id==='f_type'&&el.closest('#mform'))syncEventForm(true);
   if(el.id==='ac_store')syncAccept();
+  if(el.id==='by_payer')updateBuyPreview();
   if(el.classList&&el.classList.contains('is')&&el.closest('.itemrow')){
     el.closest('.itemrow').querySelector('.in').hidden=!!el.value;
   }
@@ -1474,6 +1686,8 @@ document.addEventListener('change',function(ev){
 document.addEventListener('input',function(ev){
   if(ev.target.id==='q'){S.q=ev.target.value;var pl=$('#plist');if(pl)pl.innerHTML=playersList();}
   if(ev.target.id==='rs_qty')updateRestockPreview();
+  if(ev.target.id==='by_qty')updateBuyPreview();
+  if(ev.target.name&&ev.target.name.indexOf('q_')===0)updateCatPreview();
 });
 document.addEventListener('submit',function(ev){if(ev.target.id==='mform')submitModal(ev);});
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&S.modal)closeModal();});
